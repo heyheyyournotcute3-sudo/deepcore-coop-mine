@@ -386,7 +386,7 @@ pub struct LayerDef {
 }
 
 /// Hazard tuning from `hazards.ron`.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Copy, Deserialize)]
 pub struct HazardTuning {
     /// Radiation dose above which the screen grains.
     pub dose_grain: f32,

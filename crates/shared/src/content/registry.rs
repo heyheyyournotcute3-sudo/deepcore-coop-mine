@@ -185,7 +185,7 @@ pub enum ContentError {
         /// Path that failed.
         path: PathBuf,
         /// RON error.
-        source: ron::error::SpannedError,
+        source: Box<ron::error::SpannedError>,
     },
     /// The content is structurally invalid.
     #[error("invalid content: {0}")]
@@ -193,7 +193,7 @@ pub enum ContentError {
 }
 
 /// The loaded, validated content.
-#[derive(Debug, Default, bevy::prelude::Resource)]
+#[derive(Debug, Default, Clone, bevy::prelude::Resource)]
 pub struct ContentRegistry {
     /// Block table (id order == palette order).
     pub blocks: Vec<Block>,
@@ -898,6 +898,6 @@ fn read_ron<T: serde::de::DeserializeOwned>(path: &Path) -> Result<T, ContentErr
     })?;
     ron::from_str(&text).map_err(|source| ContentError::Parse {
         path: path.to_path_buf(),
-        source,
+        source: Box::new(source),
     })
 }

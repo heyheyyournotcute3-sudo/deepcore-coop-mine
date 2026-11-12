@@ -33,6 +33,20 @@ pub struct ContentPlugin;
 
 impl Plugin for ContentPlugin {
     fn build(&self, app: &mut App) {
+        // Idempotent: binaries add the content plugin directly to control the order and again
+        // through `SharedPlugin`, which would otherwise panic on the duplicate.
+        if app.world().contains_resource::<ContentRegistry>() {
+            return;
+        }
+        app.add_plugins(ContentRegistryLoader);
+    }
+}
+
+/// The actual loader, so [`ContentPlugin`] stays idempotent.
+struct ContentRegistryLoader;
+
+impl Plugin for ContentRegistryLoader {
+    fn build(&self, app: &mut App) {
         if !app.world().contains_resource::<ContentRegistry>() {
             let dir = app
                 .world()

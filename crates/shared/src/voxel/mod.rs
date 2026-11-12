@@ -109,6 +109,18 @@ impl LoadedChunks {
     }
 }
 
+/// A read-only view of blocks, used by the mesher and the movement collision code.
+pub trait BlockSource {
+    /// Reads a block, returning `None` when the chunk is not loaded.
+    fn block(&self, pos: BlockPos) -> Option<u16>;
+}
+
+impl BlockSource for LoadedChunks {
+    fn block(&self, pos: BlockPos) -> Option<u16> {
+        LoadedChunks::block(self, pos)
+    }
+}
+
 /// The id of the unbreakable bedrock block. `1` is pinned by the registry (`air` is `0`).
 pub const BEDROCK_ID: u16 = 1;
 

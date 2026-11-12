@@ -31,7 +31,7 @@ bevy = { version = "0.20.1", default-features = false, features = [
 bevy_replicon = "0.45.5"
 bevy_replicon_renet = "0.21.0"
 bevy_egui = "0.43.1"
-renet = "6.0"
+renet = "2.0"
 
 # --- data ---------------------------------------------------------------
 serde = { version = "1.0.228", features = ["derive"] }

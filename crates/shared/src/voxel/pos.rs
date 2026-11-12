@@ -95,6 +95,21 @@ impl BlockPos {
     pub fn offset(self, dx: i32, dy: i32, dz: i32) -> Self {
         Self::new(self.x + dx, self.y + dy, self.z + dz)
     }
+
+    /// The block position containing a world-space point.
+    pub fn from_vec3(position: bevy::math::Vec3) -> Self {
+        Self::new(
+            position.x.floor() as i32,
+            position.y.floor() as i32,
+            position.z.floor() as i32,
+        )
+    }
+}
+
+impl Default for BlockPos {
+    fn default() -> Self {
+        Self::new(0, 0, 0)
+    }
 }
 
 /// Integer chunk coordinate.
@@ -190,13 +205,14 @@ pub fn index_to_local(index: usize) -> UVec3 {
 }
 
 /// The six axis-aligned block faces.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
 pub enum BlockFace {
     /// +X.
     East,
     /// -X.
     West,
     /// +Y.
+    #[default]
     Up,
     /// -Y.
     Down,

@@ -21,8 +21,12 @@ pub struct SharedPlugin;
 
 impl Plugin for SharedPlugin {
     fn build(&self, app: &mut App) {
+        // Content is often added directly by a binary first (so the registries exist before the
+        // other plugins build); adding it again would panic.
+        if !app.world().contains_resource::<content::ContentRegistry>() {
+            app.add_plugins(content::ContentPlugin);
+        }
         app.add_plugins((
-            content::ContentPlugin,
             voxel::VoxelPlugin,
             worldgen::WorldgenPlugin,
             movement::MovementPlugin,

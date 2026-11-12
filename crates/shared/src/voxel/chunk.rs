@@ -179,7 +179,7 @@ impl Chunk {
         let byte = bit_offset / 8;
         let shift = bit_offset % 8;
         let mut value: u32 = 0;
-        let needed = (shift + bits + 7) / 8;
+        let needed = (shift + bits).div_ceil(8);
         for offset in 0..needed {
             value |= u32::from(*self.data.get(byte + offset).unwrap_or(&0)) << (8 * offset);
         }
@@ -193,7 +193,7 @@ impl Chunk {
         let bit_offset = index * bits;
         let byte = bit_offset / 8;
         let shift = bit_offset % 8;
-        let needed = (shift + bits + 7) / 8;
+        let needed = (shift + bits).div_ceil(8);
         let mut window: u32 = 0;
         for offset in 0..needed {
             window |= u32::from(*self.data.get(byte + offset).unwrap_or(&0)) << (8 * offset);

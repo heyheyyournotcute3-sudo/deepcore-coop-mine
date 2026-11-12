@@ -5,6 +5,10 @@
 //! replicated component changes shape.
 
 use bevy::prelude::*;
+pub use bevy_replicon::prelude::{
+    Channel, ClientId, ConnectedClient, DisconnectRequest, FromClient, Replicated, SendTargets,
+    ToClients,
+};
 use bevy_replicon::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -31,6 +35,14 @@ pub struct ProtocolPlugin;
 
 impl Plugin for ProtocolPlugin {
     fn build(&self, app: &mut App) {
+        // The replication rules need replicon's registries, which only exist once
+        // `RepliconPlugins` has been added. Binaries add that first; this guard turns a
+        // misordered build into a clear message instead of an opaque panic.
+        assert!(
+            app.world().get_resource::<bevy_replicon::shared::replication::registry::ReplicationRegistry>().is_some(),
+            "ProtocolPlugin must be added after RepliconPlugins"
+        );
+
         // --- replicated components ---------------------------------------------------
         app.replicate::<NetworkPosition>()
             .replicate::<NetworkRotation>()
@@ -88,22 +100,41 @@ pub struct NetworkHeld {
 #[derive(Debug, Clone, Component, Serialize, Deserialize, PartialEq, Eq)]
 pub struct PlayerName(pub String);
 
+/// Marks the player entity owned by the receiving client.
+///
+/// Registered as a replicon visibility filter on the server, so only the owning client receives
+/// it; every client can therefore tell "my body" from "someone else's body" without matching
+/// display names.
+#[derive(Debug, Clone, Copy, Component, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[component(immutable)]
+pub struct LocalOwner;
+
+impl bevy_replicon::shared::replication::visibility::VisibilityFilter for LocalOwner {
+    type ClientComponent = OwnedPlayer;
+    type Scope = Entity;
+
+    fn is_visible(&self, _client: Entity, owned: Option<&Self::ClientComponent>) -> bool {
+        // Only the client that owns a player sees the `LocalOwner` marker. The server inserts
+        // `OwnedPlayer` on the client entity in the same command as the player, so the filter is
+        // satisfied from the first replication tick onwards.
+        owned.is_some()
+    }
+}
+
+/// Marker on the client entity that has completed the handshake and owns a player.
+///
+/// Kept in the shared crate so the visibility filter for [`LocalOwner`] can name it.
+#[derive(Debug, Clone, Copy, Component, Default)]
+#[component(immutable)]
+pub struct OwnedPlayer;
+
 /// Vitals replicated to the owning player only.
-#[derive(Debug, Clone, Copy, Component, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Copy, Component, Default, Serialize, Deserialize, PartialEq)]
 pub struct PlayerVitals {
     /// The vitals.
     pub vitals: Vitals,
     /// Worn gear.
     pub gear: WornGear,
-}
-
-impl Default for PlayerVitals {
-    fn default() -> Self {
-        Self {
-            vitals: Vitals::default(),
-            gear: WornGear::default(),
-        }
-    }
 }
 
 /// A machine, replicated to everyone (coarse state only).
@@ -366,7 +397,7 @@ pub struct MachineScreen {
 }
 
 /// The team's tech tree state.
-#[derive(Debug, Clone, Message, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Message, Serialize, Deserialize)]
 pub struct TechState {
     /// Researched nodes.
     pub researched: Vec<ContentId>,

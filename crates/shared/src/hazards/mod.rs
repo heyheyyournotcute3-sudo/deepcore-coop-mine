@@ -296,8 +296,10 @@ mod tests {
     #[test]
     fn high_dose_drains_health() {
         let content = content();
-        let mut vitals = Vitals::default();
-        vitals.dose = 700.0;
+        let mut vitals = Vitals {
+            dose: 700.0,
+            ..Default::default()
+        };
         let environment = Environment::default();
         let effects = tick_vitals(&content, &mut vitals, &WornGear::default(), &environment, 1.0);
         assert!(vitals.health < 100.0);

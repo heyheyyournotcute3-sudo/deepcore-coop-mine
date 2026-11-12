@@ -1,11 +1,26 @@
 [package]
-name="deepcore-client"
-version.workspace=true
-edition.workspace=true
+name = "deepcore-client"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "deepcore-client"
+path = "src/main.rs"
 
 [dependencies]
-deepcore-shared={workspace=true}
-bevy={workspace=true}
-bevy_egui={workspace=true}
-bevy_replicon={workspace=true}
-bevy_replicon_renet={workspace=true}
+deepcore-shared = { workspace = true }
+bevy = { workspace = true }
+bevy_egui = { workspace = true }
+bevy_replicon = { workspace = true }
+bevy_replicon_renet = { workspace = true }
+renet = { workspace = true }
+serde = { workspace = true }
+postcard = { workspace = true }
+zstd = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+clap = { workspace = true }
+anyhow = { workspace = true }
+rand = { workspace = true }
