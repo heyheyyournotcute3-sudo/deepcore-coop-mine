@@ -4,15 +4,13 @@ use bevy::prelude::*;
 use bevy_replicon::prelude::*;
 use deepcore_shared::content::{ContentRegistry, ItemCategory};
 use deepcore_shared::crafting::ToolStats;
-use deepcore_shared::hazards::{Vitals, WornGear, tick_vitals, Environment};
+use deepcore_shared::hazards::{Environment, Vitals, WornGear, tick_vitals};
 use deepcore_shared::inventory::{Inventory, ItemStack};
-use deepcore_shared::movement::{
-    BlockQuery, BodyState, MovementConfig, PlayerInput, step_body,
-};
+use deepcore_shared::movement::{BlockQuery, BodyState, MovementConfig, PlayerInput, step_body};
+pub use deepcore_shared::protocol::PlayerName as PlayerNameComponent;
 use deepcore_shared::protocol::{
     NetworkHeld, NetworkPosition, NetworkRotation, PlayerName, PlayerVitals, ServerNotice,
 };
-pub use deepcore_shared::protocol::PlayerName as PlayerNameComponent;
 use deepcore_shared::voxel::{BlockPos, LoadedChunks};
 use tracing::info;
 
@@ -27,7 +25,7 @@ pub struct Player;
 pub struct OwnedBy(pub Entity);
 
 /// Per-player server state that never leaves the server.
-#[derive(Debug, Component)]
+#[derive(Debug, Clone, Component)]
 pub struct PlayerState {
     /// The authoritative body.
     pub body: BodyState,
@@ -126,9 +124,10 @@ pub fn spawn_player_for_client(
         ))
         .id();
 
-    commands
-        .entity(client)
-        .insert((HandshakedPlayer(player), deepcore_shared::protocol::OwnedPlayer));
+    commands.entity(client).insert((
+        HandshakedPlayer(player),
+        deepcore_shared::protocol::OwnedPlayer,
+    ));
     info!("spawned player {player} for client {client} ({name})");
 }
 
@@ -141,7 +140,12 @@ pub struct HandshakedPlayer(pub Entity);
 /// Movement is the only thing clients predict, so this is where authority is re-established:
 /// every input is applied with the same pure function the client used.
 pub fn apply_player_inputs(
-    mut players: Query<(&mut PlayerState, &mut NetworkPosition, &mut NetworkRotation, &mut PlayerVitals)>,
+    mut players: Query<(
+        &mut PlayerState,
+        &mut NetworkPosition,
+        &mut NetworkRotation,
+        &mut PlayerVitals,
+    )>,
     chunks: Res<LoadedChunks>,
     content: Res<ContentRegistry>,
     mut notices: MessageWriter<ToClients<ServerNotice>>,
@@ -329,7 +333,9 @@ pub fn build_environment(
 /// Whether the player holds a tool of a given tier or better.
 pub fn holds_tier(content: &ContentRegistry, state: &PlayerState, tier: u8) -> bool {
     match content.item(state.held_item()).map(|item| &item.category) {
-        Some(ItemCategory::Tool { tier: tool_tier, .. }) => *tool_tier >= tier,
+        Some(ItemCategory::Tool {
+            tier: tool_tier, ..
+        }) => *tool_tier >= tier,
         _ => tier == 0,
     }
 }

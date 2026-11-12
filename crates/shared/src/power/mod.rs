@@ -90,10 +90,18 @@ impl Network {
     pub fn solve(&mut self, dt_hours: f32) {
         self.supply = self.producers.iter().map(|producer| producer.amount).sum();
         self.demand = self.consumers.iter().map(|consumer| consumer.demand).sum();
-        let capacity: f32 = self.batteries.iter().map(|battery| battery.capacity_kwh).sum();
+        let capacity: f32 = self
+            .batteries
+            .iter()
+            .map(|battery| battery.capacity_kwh)
+            .sum();
         // Read the store from the batteries before deciding, so a network that was just built
         // (or loaded from a save) does not start by thinking its batteries are empty.
-        self.stored_kwh = self.batteries.iter().map(|battery| battery.charge_kwh).sum();
+        self.stored_kwh = self
+            .batteries
+            .iter()
+            .map(|battery| battery.charge_kwh)
+            .sum();
 
         if self.demand <= 0.0001 {
             self.satisfaction = 1.0;
@@ -108,7 +116,11 @@ impl Network {
             let covered = self.supply + available;
             self.satisfaction = (covered / self.demand).clamp(0.0, 1.0);
         }
-        self.stored_kwh = self.batteries.iter().map(|battery| battery.charge_kwh).sum();
+        self.stored_kwh = self
+            .batteries
+            .iter()
+            .map(|battery| battery.charge_kwh)
+            .sum();
     }
 
     fn charge(&mut self, dt_hours: f32, surplus: f32, capacity: f32) {

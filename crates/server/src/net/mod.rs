@@ -9,18 +9,18 @@ use std::time::Duration;
 
 use bevy::prelude::*;
 use bevy_replicon::prelude::*;
-use deepcore_shared::protocol::{
-    ClientId, ConnectedClient, DisconnectRequest, FromClient, SendTargets, ToClients,
-};
-use bevy_replicon_renet::renet::RenetClient;
 use bevy_replicon_renet::RenetServer as RenetServerResource;
 use bevy_replicon_renet::netcode::{
     ClientAuthentication, NetcodeServerTransport, ServerAuthentication, ServerConfig,
 };
+use bevy_replicon_renet::renet::RenetClient;
 use deepcore_shared::content::ContentRegistry;
 use deepcore_shared::protocol::{ChunkData, NetworkPosition};
-use deepcore_shared::voxel::{BlockPos, ChunkPos, LoadedChunks};
+use deepcore_shared::protocol::{
+    ClientId, ConnectedClient, DisconnectRequest, FromClient, SendTargets, ToClients,
+};
 use deepcore_shared::protocol::{Handshake, PROTOCOL_VERSION, ServerNotice};
+use deepcore_shared::voxel::{BlockPos, ChunkPos, LoadedChunks};
 use tracing::{debug, info, warn};
 
 use crate::sim::player::spawn_player_for_client;
@@ -78,10 +78,7 @@ fn start_server(
     let socket = match std::net::UdpSocket::bind(config.bind_address()) {
         Ok(socket) => socket,
         Err(error) => {
-            crate::fatal(&format!(
-                "cannot bind UDP port {}: {error}",
-                config.0.port
-            ));
+            crate::fatal(&format!("cannot bind UDP port {}: {error}", config.0.port));
         }
     };
     let transport = match NetcodeServerTransport::new(server_config, socket) {

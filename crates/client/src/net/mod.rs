@@ -4,9 +4,9 @@ use std::net::SocketAddr;
 
 use bevy::prelude::*;
 use bevy_replicon::prelude::*;
+use bevy_replicon_renet::RenetChannelsExt;
 use bevy_replicon_renet::RenetClient;
 use bevy_replicon_renet::netcode::{ClientAuthentication, NetcodeClientTransport};
-use bevy_replicon_renet::RenetChannelsExt;
 use deepcore_shared::content::ContentRegistry;
 use deepcore_shared::protocol::{
     BlockChanges, ChatLine, ChunkData, Handshake, InventoryUpdate, MachineScreen, MiningFeedback,
@@ -145,14 +145,14 @@ fn start_connection(
             return;
         }
     };
-    let transport = match NetcodeClientTransport::new(std::time::Duration::ZERO, authentication, socket)
-    {
-        Ok(transport) => transport,
-        Err(error) => {
-            warn!("cannot create client transport: {error}");
-            return;
-        }
-    };
+    let transport =
+        match NetcodeClientTransport::new(std::time::Duration::ZERO, authentication, socket) {
+            Ok(transport) => transport,
+            Err(error) => {
+                warn!("cannot create client transport: {error}");
+                return;
+            }
+        };
     info!("connecting to {server_addr}");
     commands.insert_resource(client);
     commands.insert_resource(transport);
@@ -237,16 +237,11 @@ fn receive_block_changes(
     }
 }
 
-fn receive_notices(
-    mut messages: MessageReader<ServerNotice>,
-    mut session: ResMut<SessionState>,
-) {
+fn receive_notices(mut messages: MessageReader<ServerNotice>, mut session: ResMut<SessionState>) {
     for notice in messages.read() {
         match notice {
             ServerNotice::Welcome {
-                seed,
-                server_name,
-                ..
+                seed, server_name, ..
             } => {
                 session.welcomed = true;
                 session.seed = *seed;

@@ -5,11 +5,11 @@
 //! replicated component changes shape.
 
 use bevy::prelude::*;
+use bevy_replicon::prelude::*;
 pub use bevy_replicon::prelude::{
     Channel, ClientId, ConnectedClient, DisconnectRequest, FromClient, Replicated, SendTargets,
     ToClients,
 };
-use bevy_replicon::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::content::ContentId;
@@ -39,7 +39,9 @@ impl Plugin for ProtocolPlugin {
         // `RepliconPlugins` has been added. Binaries add that first; this guard turns a
         // misordered build into a clear message instead of an opaque panic.
         assert!(
-            app.world().get_resource::<bevy_replicon::shared::replication::registry::ReplicationRegistry>().is_some(),
+            app.world()
+                .get_resource::<bevy_replicon::shared::replication::registry::ReplicationRegistry>()
+                .is_some(),
             "ProtocolPlugin must be added after RepliconPlugins"
         );
 

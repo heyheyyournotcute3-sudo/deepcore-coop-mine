@@ -10,7 +10,9 @@ use std::fmt;
 use serde::{Deserialize, Serialize};
 
 /// Compact numeric id for a piece of content (block, item, recipe, machine, tech node).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Serialize, Deserialize)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Serialize, Deserialize,
+)]
 pub struct ContentId(pub u16);
 
 impl ContentId {

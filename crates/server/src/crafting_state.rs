@@ -93,10 +93,7 @@ pub fn handle_research(
         let Ok(mut state) = players.get_mut(owner.0) else {
             continue;
         };
-        match tech
-            .0
-            .deposit(&content, *node, items, &mut state.inventory)
-        {
+        match tech.0.deposit(&content, *node, items, &mut state.inventory) {
             Ok(completed) => {
                 let name = content
                     .tech(*node)

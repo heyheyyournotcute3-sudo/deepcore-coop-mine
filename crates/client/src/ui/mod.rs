@@ -7,9 +7,7 @@ use bevy::prelude::*;
 use bevy_egui::{EguiContexts, EguiPrimaryContextPass, egui};
 use deepcore_shared::content::{ContentId, ContentRegistry, MachineEnergy};
 use deepcore_shared::inventory::ItemStack;
-use deepcore_shared::protocol::{
-    ClientIntent, ContainerId, SlotAddress,
-};
+use deepcore_shared::protocol::{ClientIntent, ContainerId, SlotAddress};
 
 use crate::input::LocalInput;
 use crate::net::SessionState;
@@ -75,15 +73,36 @@ impl Default for UiState {
 
 /// The guided objective list for the first hour.
 pub const OBJECTIVES: &[(&str, &str)] = &[
-    ("Punch down to the Shale Beds", "Mine 16 blocks of dirt below your feet."),
-    ("Collect coal, copper and iron", "Look for dark seams and green or reddish ore in stone."),
-    ("Build a Workbench", "Open the inventory and hand-craft a Workbench Kit."),
-    ("Research Hand Tools", "Deliver timber at the Research Desk."),
+    (
+        "Punch down to the Shale Beds",
+        "Mine 16 blocks of dirt below your feet.",
+    ),
+    (
+        "Collect coal, copper and iron",
+        "Look for dark seams and green or reddish ore in stone.",
+    ),
+    (
+        "Build a Workbench",
+        "Open the inventory and hand-craft a Workbench Kit.",
+    ),
+    (
+        "Research Hand Tools",
+        "Deliver timber at the Research Desk.",
+    ),
     ("Fire clay into bricks", "Build a Brick Kiln and burn clay."),
-    ("Smelt your first iron ingot", "Build a Stone Furnace and burn coal."),
+    (
+        "Smelt your first iron ingot",
+        "Build a Stone Furnace and burn coal.",
+    ),
     ("Build an Anvil", "Forge iron plates and rods."),
-    ("Build a Blast Furnace", "Make steel from iron, coal and limestone."),
-    ("Forge the Hardened Steel Pickaxe", "Steel opens the Granite Depths."),
+    (
+        "Build a Blast Furnace",
+        "Make steel from iron, coal and limestone.",
+    ),
+    (
+        "Forge the Hardened Steel Pickaxe",
+        "Steel opens the Granite Depths.",
+    ),
 ];
 
 fn capture_pointer(
@@ -199,11 +218,19 @@ fn draw_inventory(
             panel.label("Hotbar");
             panel.horizontal(|row| {
                 for slot in 0..9 {
-                    slot_button(row, &inventory.hotbar[slot], content, slot == inventory.selected as usize, |clicked| {
-                        if clicked {
-                            intents.intents.push(ClientIntent::SelectSlot { slot: slot as u8 });
-                        }
-                    });
+                    slot_button(
+                        row,
+                        &inventory.hotbar[slot],
+                        content,
+                        slot == inventory.selected as usize,
+                        |clicked| {
+                            if clicked {
+                                intents
+                                    .intents
+                                    .push(ClientIntent::SelectSlot { slot: slot as u8 });
+                            }
+                        },
+                    );
                 }
             });
             panel.separator();
@@ -266,10 +293,7 @@ fn draw_inventory(
                         .collect();
                     panel.horizontal(|row| {
                         let label = format!("{} → {}", inputs.join(" + "), outputs.join(" + "));
-                        if row
-                            .add_enabled(!locked, egui::Button::new(label))
-                            .clicked()
-                        {
+                        if row.add_enabled(!locked, egui::Button::new(label)).clicked() {
                             intents.intents.push(ClientIntent::Craft {
                                 recipe: *recipe_id,
                                 count: 1,
@@ -434,11 +458,8 @@ fn draw_tech_tree(
             panel.separator();
             egui::ScrollArea::vertical().show(panel, |scroll| {
                 for era in 0..=5u8 {
-                    let nodes: Vec<&deepcore_shared::content::TechNode> = content
-                        .tech
-                        .iter()
-                        .filter(|node| node.era == era)
-                        .collect();
+                    let nodes: Vec<&deepcore_shared::content::TechNode> =
+                        content.tech.iter().filter(|node| node.era == era).collect();
                     if nodes.is_empty() {
                         continue;
                     }
@@ -470,10 +491,7 @@ fn draw_tech_tree(
                                 })
                                 .collect();
                             row.label(cost.join(", "));
-                            if !researched
-                                && available
-                                && row.button("Deposit all").clicked()
-                            {
+                            if !researched && available && row.button("Deposit all").clicked() {
                                 intents.intents.push(ClientIntent::ResearchDeposit {
                                     node: node.id,
                                     items: node.cost.clone(),
@@ -498,24 +516,24 @@ fn draw_chat(
         .title_bar(false)
         .resizable(false)
         .show(ctx, |panel| {
-        egui::ScrollArea::vertical()
-            .max_height(90.0)
-            .stick_to_bottom(true)
-            .show(panel, |scroll| {
-                for line in session.chat.iter().rev().take(8).rev() {
-                    scroll.label(format!("<{}> {}", line.from, line.text));
+            egui::ScrollArea::vertical()
+                .max_height(90.0)
+                .stick_to_bottom(true)
+                .show(panel, |scroll| {
+                    for line in session.chat.iter().rev().take(8).rev() {
+                        scroll.label(format!("<{}> {}", line.from, line.text));
+                    }
+                });
+            panel.horizontal(|row| {
+                let response = row.text_edit_singleline(&mut ui.chat_buffer);
+                if response.lost_focus() && row.input(|input| input.key_pressed(egui::Key::Enter)) {
+                    let text = std::mem::take(&mut ui.chat_buffer);
+                    if !text.trim().is_empty() {
+                        intents.intents.push(ClientIntent::Chat { text });
+                    }
                 }
             });
-        panel.horizontal(|row| {
-            let response = row.text_edit_singleline(&mut ui.chat_buffer);
-            if response.lost_focus() && row.input(|input| input.key_pressed(egui::Key::Enter)) {
-                let text = std::mem::take(&mut ui.chat_buffer);
-                if !text.trim().is_empty() {
-                    intents.intents.push(ClientIntent::Chat { text });
-                }
-            }
         });
-    });
 }
 
 fn draw_objectives(ctx: &mut egui::Context, session: &SessionState) {

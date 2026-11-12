@@ -118,7 +118,11 @@ fn main() -> anyhow::Result<()> {
     app.add_systems(Startup, setup_scene);
     app.add_systems(
         Update,
-        (spawn_player_avatars, follow_local_player, decay_notifications),
+        (
+            spawn_player_avatars,
+            follow_local_player,
+            decay_notifications,
+        ),
     );
     app.run();
     Ok(())
@@ -141,11 +145,7 @@ pub struct Headlamp;
 type CameraFilter = (With<Camera3d>, Without<LocalPlayer>, Without<Headlamp>);
 
 /// Query filter for the local player's transform.
-type PlayerFilter = (
-    With<LocalPlayer>,
-    Without<Camera3d>,
-    Without<Headlamp>,
-);
+type PlayerFilter = (With<LocalPlayer>, Without<Camera3d>, Without<Headlamp>);
 
 /// A simple body mesh for a replicated player, so teammates are visible.
 #[derive(Debug, Component)]
@@ -181,23 +181,15 @@ fn spawn_player_avatars(
 }
 
 /// Spawns the camera, the sun and the ambient light.
-fn setup_scene(
-    mut commands: Commands,
-    content: Res<ContentRegistry>,
-    config: Res<ClientConfig>,
-) {
+fn setup_scene(mut commands: Commands, content: Res<ContentRegistry>, config: Res<ClientConfig>) {
     let spawn = deepcore_shared::worldgen::spawn_position(&content);
     commands.spawn((
         Camera3d::default(),
-        Transform::from_xyz(
-            spawn.x as f32,
-            spawn.y as f32 + 6.0,
-            spawn.z as f32 + 10.0,
-        )
-        .looking_at(
-            Vec3::new(spawn.x as f32, spawn.y as f32, spawn.z as f32),
-            Vec3::Y,
-        ),
+        Transform::from_xyz(spawn.x as f32, spawn.y as f32 + 6.0, spawn.z as f32 + 10.0)
+            .looking_at(
+                Vec3::new(spawn.x as f32, spawn.y as f32, spawn.z as f32),
+                Vec3::Y,
+            ),
         Projection::Perspective(PerspectiveProjection {
             fov: 75f32.to_radians(),
             far: 900.0,
@@ -245,10 +237,7 @@ fn setup_scene(
         brightness: 1_600.0,
         ..default()
     });
-    info!(
-        "scene ready: {} blocks of content",
-        content.blocks.len()
-    );
+    info!("scene ready: {} blocks of content", content.blocks.len());
 }
 
 /// Keeps the camera on the local player's eyes.
@@ -266,8 +255,7 @@ fn follow_local_player(
     let Ok(mut transform) = camera.single_mut() else {
         return;
     };
-    transform.translation = player.translation
-        + Vec3::Y * deepcore_shared::movement::EYE_HEIGHT;
+    transform.translation = player.translation + Vec3::Y * deepcore_shared::movement::EYE_HEIGHT;
     // The camera looks where the mouse points, using the predicted input rather than the
     // replicated rotation, so looking around is never delayed by the network.
     transform.rotation = Quat::from_euler(EulerRot::YXZ, input.yaw, -input.pitch, 0.0);

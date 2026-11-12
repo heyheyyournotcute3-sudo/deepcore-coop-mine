@@ -115,7 +115,13 @@ pub fn move_items(
         .unwrap_or(64);
     let mut source = inventory.get(from_ref).copied().unwrap_or(ItemStack::EMPTY);
     let mut destination = inventory.get(to_ref).copied().unwrap_or(ItemStack::EMPTY);
-    transfer(&mut source, &mut destination, SlotKind::Any, max_stack, count);
+    transfer(
+        &mut source,
+        &mut destination,
+        SlotKind::Any,
+        max_stack,
+        count,
+    );
     if let Some(slot) = inventory.get_mut(from_ref) {
         *slot = source;
     }
@@ -138,8 +144,9 @@ fn equip_gear(
     if stack.is_empty() {
         return;
     }
-    let Some(ItemCategory::Gear { slot: gear_slot, .. }) =
-        content.item(stack.item).map(|item| &item.category)
+    let Some(ItemCategory::Gear {
+        slot: gear_slot, ..
+    }) = content.item(stack.item).map(|item| &item.category)
     else {
         notices.write(ToClients {
             targets: SendTargets::Single(client),
@@ -182,6 +189,11 @@ fn unequip_gear(state: &mut PlayerState, gear_slot: u8, content: &ContentRegistr
 }
 
 /// Puts a freshly mined stack into the inventory, returning what did not fit.
-pub fn grant_items(state: &mut PlayerState, item: ContentId, count: u32, content: &ContentRegistry) -> u32 {
+pub fn grant_items(
+    state: &mut PlayerState,
+    item: ContentId,
+    count: u32,
+    content: &ContentRegistry,
+) -> u32 {
     state.inventory.insert(item, count, content)
 }

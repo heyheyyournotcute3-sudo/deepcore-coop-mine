@@ -68,7 +68,11 @@ impl BlockPos {
 
     /// Centre of the block in world space.
     pub fn center(self) -> bevy::math::Vec3 {
-        bevy::math::Vec3::new(self.x as f32 + 0.5, self.y as f32 + 0.5, self.z as f32 + 0.5)
+        bevy::math::Vec3::new(
+            self.x as f32 + 0.5,
+            self.y as f32 + 0.5,
+            self.z as f32 + 0.5,
+        )
     }
 
     /// Minimum corner of the block.

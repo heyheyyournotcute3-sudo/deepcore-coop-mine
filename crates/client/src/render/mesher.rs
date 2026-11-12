@@ -16,7 +16,7 @@ use bevy::mesh::{Indices, PrimitiveTopology};
 use bevy::prelude::*;
 use deepcore_shared::content::ContentRegistry;
 use deepcore_shared::voxel::{
-    CHUNK_SIZE, Chunk, ChunkPos, BlockSource, index_to_local, local_index,
+    BlockSource, CHUNK_SIZE, Chunk, ChunkPos, index_to_local, local_index,
 };
 
 use crate::render::atlas::BlockAtlas;
@@ -201,7 +201,11 @@ impl BlockPosExt for BlockPos {
         let mut world = [local[0] as i32, local[1] as i32, local[2] as i32];
         world[axis] += sign;
         let origin = pos.origin();
-        BlockPos::new(origin.x + world[0], origin.y + world[1], origin.z + world[2])
+        BlockPos::new(
+            origin.x + world[0],
+            origin.y + world[1],
+            origin.z + world[2],
+        )
     }
 }
 
@@ -332,12 +336,7 @@ mod tests {
     fn mesh_has_matching_attribute_counts() {
         let atlas = atlas();
         let quad = Quad {
-            positions: [
-                Vec3::ZERO,
-                Vec3::X,
-                Vec3::X + Vec3::Y,
-                Vec3::Y,
-            ],
+            positions: [Vec3::ZERO, Vec3::X, Vec3::X + Vec3::Y, Vec3::Y],
             block: 3,
             normal: Vec3::Z,
         };
@@ -349,11 +348,14 @@ mod tests {
     fn local_index_round_trip_matches_voxel_crate() {
         use deepcore_shared::voxel::CHUNK_VOLUME;
         for index in [0usize, 1, 33, CHUNK_VOLUME - 1] {
-            assert_eq!(local_of(
-                coordinate_of(index).x,
-                coordinate_of(index).y,
-                coordinate_of(index).z
-            ), index);
+            assert_eq!(
+                local_of(
+                    coordinate_of(index).x,
+                    coordinate_of(index).y,
+                    coordinate_of(index).z
+                ),
+                index
+            );
         }
     }
 }

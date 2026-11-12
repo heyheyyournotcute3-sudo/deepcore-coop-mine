@@ -3,9 +3,9 @@
 
 use std::num::{NonZeroU16, NonZeroU32};
 
+use bevy::audio::Source;
 use bevy::audio::{AddAudioSource, Decodable, Sample};
 use bevy::prelude::*;
-use bevy::audio::Source;
 
 use crate::net::SessionState;
 
@@ -17,7 +17,10 @@ impl Plugin for AudioPlugin {
         app.add_audio_source::<ProceduralSound>()
             .init_resource::<SoundLibrary>()
             .add_systems(Startup, build_library)
-            .add_systems(Update, (play_mining_sound, play_geiger_clicks, play_notifications));
+            .add_systems(
+                Update,
+                (play_mining_sound, play_geiger_clicks, play_notifications),
+            );
     }
 }
 
@@ -64,13 +67,17 @@ impl ProceduralSound {
             let sample = match kind {
                 SoundKind::Dig => {
                     // Filtered noise burst plus a low thump.
-                    noise_state = noise_state.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
+                    noise_state = noise_state
+                        .wrapping_mul(1_664_525)
+                        .wrapping_add(1_013_904_223);
                     let noise = (noise_state >> 8) as f32 / 8_388_608.0 - 1.0;
                     let thump = (t * 90.0 * std::f32::consts::TAU).sin() * 0.5;
                     (noise * 0.35 + thump) * (1.0 - progress).powi(2)
                 }
                 SoundKind::Place => {
-                    noise_state = noise_state.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
+                    noise_state = noise_state
+                        .wrapping_mul(1_664_525)
+                        .wrapping_add(1_013_904_223);
                     let noise = (noise_state >> 8) as f32 / 8_388_608.0 - 1.0;
                     noise * 0.3 * (1.0 - progress).powi(3)
                 }
@@ -84,7 +91,9 @@ impl ProceduralSound {
                     (t * sweep * std::f32::consts::TAU).sin() * 0.25
                 }
                 SoundKind::GeigerClick => {
-                    noise_state = noise_state.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
+                    noise_state = noise_state
+                        .wrapping_mul(1_664_525)
+                        .wrapping_add(1_013_904_223);
                     let noise = (noise_state >> 8) as f32 / 8_388_608.0 - 1.0;
                     noise * (1.0 - progress).powi(4) * 0.6
                 }

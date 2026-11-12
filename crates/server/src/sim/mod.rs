@@ -15,8 +15,12 @@ use bevy_replicon::prelude::*;
 use deepcore_shared::content::ContentRegistry;
 use deepcore_shared::power::PowerNetworks;
 
-use crate::crafting_state::{TechStateDirty, TechStateResource, broadcast_on_change, handle_research};
+use crate::crafting_state::{
+    TechStateDirty, TechStateResource, broadcast_on_change, handle_research,
+};
+use crate::sim::chat::handle_chat;
 use crate::sim::handshake::send_welcome;
+use crate::sim::interaction::handle_interaction;
 use crate::sim::machine::{
     BlockEntityIndex, MachinePowerDemand, compute_power_demand, refresh_open_screens, tick_machines,
 };
@@ -25,8 +29,6 @@ use crate::sim::mining::{
 };
 use crate::sim::player::{apply_player_inputs, tick_player_vitals};
 use crate::sim::power::solve_power_networks;
-use crate::sim::chat::handle_chat;
-use crate::sim::interaction::handle_interaction;
 
 pub mod chat;
 pub mod handshake;
@@ -34,6 +36,7 @@ pub mod interaction;
 pub mod inventory;
 pub mod machine;
 pub mod mining;
+pub mod placement;
 pub mod player;
 pub mod power;
 pub mod respawn;
@@ -72,6 +75,7 @@ impl Plugin for SimPlugin {
         app.add_systems(
             PreUpdate,
             (
+                placement::handle_machine_placement,
                 handle_place_block,
                 handle_interaction,
                 inventory::handle_inventory_intents,

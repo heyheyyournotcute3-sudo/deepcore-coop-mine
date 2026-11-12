@@ -22,11 +22,10 @@ pub struct PredictionPlugin;
 
 impl Plugin for PredictionPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<PredictionState>()
-            .add_systems(
-                Update,
-                (tag_local_player, reconcile, smooth_correction, draw_crack).chain(),
-            );
+        app.init_resource::<PredictionState>().add_systems(
+            Update,
+            (tag_local_player, reconcile, smooth_correction, draw_crack).chain(),
+        );
     }
 }
 
@@ -172,11 +171,7 @@ fn smooth_correction(mut prediction: ResMut<PredictionState>, time: Res<Time>) {
 }
 
 /// Advances the predicted crack animation and clears it when the server removes the block.
-fn draw_crack(
-    time: Res<Time>,
-    mut prediction: ResMut<PredictionState>,
-    chunks: Res<LoadedChunks>,
-) {
+fn draw_crack(time: Res<Time>, mut prediction: ResMut<PredictionState>, chunks: Res<LoadedChunks>) {
     let Some((block, elapsed, total)) = prediction.mining else {
         return;
     };
@@ -227,11 +222,14 @@ pub fn tag_local_player(
     mut waited: Local<f32>,
     time: Res<Time>,
     config: Res<crate::ClientConfig>,
-    owned: Query<Entity, (With<deepcore_shared::protocol::LocalOwner>, Without<LocalPlayer>)>,
-    named: Query<
-        (Entity, &deepcore_shared::protocol::PlayerName),
-        Without<LocalPlayer>,
+    owned: Query<
+        Entity,
+        (
+            With<deepcore_shared::protocol::LocalOwner>,
+            Without<LocalPlayer>,
+        ),
     >,
+    named: Query<(Entity, &deepcore_shared::protocol::PlayerName), Without<LocalPlayer>>,
 ) {
     if session.local_player.is_some() {
         return;

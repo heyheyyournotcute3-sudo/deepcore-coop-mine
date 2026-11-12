@@ -163,10 +163,7 @@ fn queue_missing_chunks(
 }
 
 /// Collects finished generation tasks into the chunk store.
-fn collect_generated_chunks(
-    mut manager: ResMut<WorldManager>,
-    mut chunks: ResMut<LoadedChunks>,
-) {
+fn collect_generated_chunks(mut manager: ResMut<WorldManager>, mut chunks: ResMut<LoadedChunks>) {
     if manager.pending.is_empty() {
         return;
     }
@@ -253,4 +250,3 @@ pub const INTEREST_VERTICAL: i32 = 4;
 
 /// Blocks across a chunk, re-exported for readability in this module.
 pub const CHUNK_BLOCKS: i32 = CHUNK_SIZE as i32;
-

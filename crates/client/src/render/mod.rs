@@ -8,6 +8,7 @@ use deepcore_shared::content::ContentRegistry;
 use deepcore_shared::voxel::{ChunkPos, LoadedChunks};
 
 pub mod atlas;
+pub mod ghost;
 pub mod mesher;
 
 use crate::render::atlas::{BlockAtlas, build_atlas_image};
@@ -23,8 +24,14 @@ impl Plugin for RenderPlugin {
             .add_systems(Startup, setup_atlas)
             .add_systems(
                 Update,
-                (queue_chunk_meshes, collect_chunk_meshes, rebuild_dirty_chunks).chain(),
-            );
+                (
+                    queue_chunk_meshes,
+                    collect_chunk_meshes,
+                    rebuild_dirty_chunks,
+                )
+                    .chain(),
+            )
+            .add_plugins(ghost::GhostPlugin);
     }
 }
 
@@ -103,9 +110,7 @@ fn queue_chunk_meshes(
     let centre = camera
         .iter()
         .next()
-        .map(|transform| {
-            deepcore_shared::voxel::BlockPos::from_vec3(transform.translation).chunk()
-        })
+        .map(|transform| deepcore_shared::voxel::BlockPos::from_vec3(transform.translation).chunk())
         .unwrap_or(ChunkPos::new(0, 0, 0));
 
     let mut candidates: Vec<(ChunkPos, u32)> = Vec::new();
@@ -138,9 +143,10 @@ fn queue_chunk_meshes(
             continue;
         };
         meshes.in_flight.insert(pos);
-        let task = pool.spawn(async move {
-            build_chunk_mesh(pos, &chunk, &chunks_snapshot, &content, &atlas)
-        });
+        let task =
+            pool.spawn(
+                async move { build_chunk_mesh(pos, &chunk, &chunks_snapshot, &content, &atlas) },
+            );
         meshes.pending.push((pos, revision, task));
     }
 }
@@ -165,11 +171,7 @@ fn collect_chunk_meshes(
             Some(mesh) => {
                 meshes.in_flight.remove(&pos);
                 let origin = pos.origin();
-                let translation = Vec3::new(
-                    origin.x as f32,
-                    origin.y as f32,
-                    origin.z as f32,
-                );
+                let translation = Vec3::new(origin.x as f32, origin.y as f32, origin.z as f32);
                 match mesh {
                     Some(mesh) => {
                         let handle = mesh_assets.add(mesh);
@@ -240,7 +242,9 @@ impl ChunkSnapshot {
         if !pos.in_bounds() {
             return Some(deepcore_shared::voxel::BEDROCK_ID);
         }
-        self.chunks.get(&pos.chunk()).map(|chunk| chunk.get(pos.local()))
+        self.chunks
+            .get(&pos.chunk())
+            .map(|chunk| chunk.get(pos.local()))
     }
 
     /// Borrows a chunk.

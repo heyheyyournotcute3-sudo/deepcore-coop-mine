@@ -68,7 +68,8 @@ impl WornGear {
         for slot in [GearSlot::Suit, GearSlot::Mask, GearSlot::Instrument] {
             if let Some(item) = self.get(slot)
                 && let Some(ItemCategory::Gear {
-                    radiation_shielding, ..
+                    radiation_shielding,
+                    ..
                 }) = content.item(item).map(|item| &item.category)
             {
                 // Shielding combines multiplicatively so two suits do not stack to immunity.
@@ -98,9 +99,8 @@ impl WornGear {
         let mut protection = 1.0f32;
         for slot in [GearSlot::Suit, GearSlot::Mask, GearSlot::Instrument] {
             if let Some(item) = self.get(slot)
-                && let Some(ItemCategory::Gear {
-                    gas_protection, ..
-                }) = content.item(item).map(|item| &item.category)
+                && let Some(ItemCategory::Gear { gas_protection, .. }) =
+                    content.item(item).map(|item| &item.category)
             {
                 protection *= gas_protection;
             }
@@ -191,7 +191,10 @@ pub fn tick_vitals(
     }
 
     // --- regeneration ----------------------------------------------------------------
-    if vitals.health > 0.0 && vitals.health < tuning.max_health && vitals.dose < tuning.dose_no_regen {
+    if vitals.health > 0.0
+        && vitals.health < tuning.max_health
+        && vitals.dose < tuning.dose_no_regen
+    {
         let regen = if effects.damage <= 0.0 { 0.6 } else { 0.0 };
         vitals.health = (vitals.health + regen * dt).min(tuning.max_health);
     }
@@ -301,7 +304,13 @@ mod tests {
             ..Default::default()
         };
         let environment = Environment::default();
-        let effects = tick_vitals(&content, &mut vitals, &WornGear::default(), &environment, 1.0);
+        let effects = tick_vitals(
+            &content,
+            &mut vitals,
+            &WornGear::default(),
+            &environment,
+            1.0,
+        );
         assert!(vitals.health < 100.0);
         assert!(effects.damage > 0.0);
     }
@@ -316,7 +325,13 @@ mod tests {
         };
         // 100 ticks of 0.1 s at 6 oxygen/s drains 60 of the 100 units of oxygen.
         for _ in 0..100 {
-            tick_vitals(&content, &mut vitals, &WornGear::default(), &environment, 0.1);
+            tick_vitals(
+                &content,
+                &mut vitals,
+                &WornGear::default(),
+                &environment,
+                0.1,
+            );
         }
         assert!(vitals.oxygen < 50.0, "oxygen = {}", vitals.oxygen);
     }
@@ -331,7 +346,13 @@ mod tests {
         };
         let environment = Environment::default();
         for _ in 0..60 {
-            tick_vitals(&content, &mut vitals, &WornGear::default(), &environment, 0.1);
+            tick_vitals(
+                &content,
+                &mut vitals,
+                &WornGear::default(),
+                &environment,
+                0.1,
+            );
         }
         assert!(vitals.health > 50.0);
         assert!(vitals.oxygen > 20.0);

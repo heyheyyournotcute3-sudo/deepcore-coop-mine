@@ -8,17 +8,17 @@ use bevy::input::mouse::MouseMotion;
 use bevy::prelude::*;
 use bevy::window::{CursorGrabMode, CursorOptions, PrimaryWindow};
 use deepcore_shared::content::ContentRegistry;
-use deepcore_shared::crafting::mining::{REACH, ToolStats, evaluate_mining};
 use deepcore_shared::crafting::MiningVerdict;
+use deepcore_shared::crafting::mining::{REACH, ToolStats, evaluate_mining};
 use deepcore_shared::inventory::SlotRef;
-use deepcore_shared::movement::{PlayerInput, PLAYER_HEIGHT};
+use deepcore_shared::movement::{PLAYER_HEIGHT, PlayerInput};
 use deepcore_shared::protocol::{ClientIntent, NetworkPosition};
 use deepcore_shared::voxel::{BlockFace, BlockPos, LoadedChunks};
 use tracing::debug;
 
+use crate::LocalPlayer;
 use crate::net::SessionState;
 use crate::prediction::PredictionState;
-use crate::LocalPlayer;
 
 /// Registers the input systems.
 pub struct InputPlugin;
@@ -122,8 +122,10 @@ fn mouse_look(
     let _ = &settings;
     for event in motion.read() {
         input.yaw -= event.delta.x * sensitivity;
-        input.pitch = (input.pitch - event.delta.y * sensitivity)
-            .clamp(-std::f32::consts::FRAC_PI_2 + 0.01, std::f32::consts::FRAC_PI_2 - 0.01);
+        input.pitch = (input.pitch - event.delta.y * sensitivity).clamp(
+            -std::f32::consts::FRAC_PI_2 + 0.01,
+            std::f32::consts::FRAC_PI_2 - 0.01,
+        );
     }
 }
 
@@ -369,7 +371,7 @@ fn placing_input(
         pos: block,
         face,
         slot,
-        facing: 0,
+        facing: crate::render::ghost::placement_facing(face),
     });
 }
 
@@ -426,10 +428,7 @@ fn hotbar_input(
 }
 
 /// Draws the block outline on the targeted block.
-fn draw_target_outline(
-    mut gizmos: Gizmos,
-    targeting: Res<Targeting>,
-) {
+fn draw_target_outline(mut gizmos: Gizmos, targeting: Res<Targeting>) {
     let Some(block) = targeting.block else {
         return;
     };
@@ -440,9 +439,6 @@ fn draw_target_outline(
         Color::srgb(1.0, 1.0, 1.0)
     };
     let size = Vec3::splat(1.002);
-    gizmos.cube(
-        Transform::from_translation(centre).with_scale(size),
-        colour,
-    );
+    gizmos.cube(Transform::from_translation(centre).with_scale(size), colour);
     let _ = PLAYER_HEIGHT;
 }

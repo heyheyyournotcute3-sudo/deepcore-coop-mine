@@ -85,14 +85,8 @@ pub fn handle_start_mining(
                 if action.is_some() || state.dead {
                     continue;
                 }
-                let (verdict, blocks, _distance) = validate_mining(
-                    &content,
-                    &chunks,
-                    state,
-                    position.position,
-                    *pos,
-                    *face,
-                );
+                let (verdict, blocks, _distance) =
+                    validate_mining(&content, &chunks, state, position.position, *pos, *face);
                 let (code, required_tier) = outcome_code(verdict);
                 report_outcome(&mut feedback, *client_id, *pos, code, required_tier);
                 let MiningVerdict::CanMine { ticks } = verdict else {
@@ -218,7 +212,12 @@ pub fn break_block(
 /// Ticks running mining actions and finishes them.
 pub fn tick_mining(
     mut commands: Commands,
-    mut players: Query<(Entity, &mut PlayerState, &mut MiningAction, &deepcore_shared::protocol::NetworkPosition)>,
+    mut players: Query<(
+        Entity,
+        &mut PlayerState,
+        &mut MiningAction,
+        &deepcore_shared::protocol::NetworkPosition,
+    )>,
     mut chunks: ResMut<LoadedChunks>,
     mut manager: ResMut<WorldManager>,
     mut changes: ResMut<PendingBlockChanges>,
@@ -289,7 +288,13 @@ pub fn flush_block_changes(
 #[allow(clippy::too_many_arguments)]
 pub fn handle_place_block(
     mut intents: MessageReader<FromClient<ClientIntent>>,
-    mut players: Query<(&mut PlayerState, &deepcore_shared::protocol::NetworkPosition), With<Player>>,
+    mut players: Query<
+        (
+            &mut PlayerState,
+            &deepcore_shared::protocol::NetworkPosition,
+        ),
+        With<Player>,
+    >,
     mut chunks: ResMut<LoadedChunks>,
     mut manager: ResMut<WorldManager>,
     mut changes: ResMut<PendingBlockChanges>,
@@ -298,7 +303,10 @@ pub fn handle_place_block(
     mut inventories: MessageWriter<ToClients<InventoryUpdate>>,
 ) {
     for FromClient { client_id, message } in intents.read() {
-        let ClientIntent::PlaceBlock { pos, face, slot, .. } = message else {
+        let ClientIntent::PlaceBlock {
+            pos, face, slot, ..
+        } = message
+        else {
             continue;
         };
         let Some(client_entity) = client_id.entity() else {
@@ -325,7 +333,10 @@ pub fn handle_place_block(
         if player_overlaps(&state, target) {
             continue;
         }
-        let Some(stack) = state.inventory.get_mut(deepcore_shared::inventory::SlotRef::Hotbar(*slot)) else {
+        let Some(stack) = state
+            .inventory
+            .get_mut(deepcore_shared::inventory::SlotRef::Hotbar(*slot))
+        else {
             continue;
         };
         if stack.is_empty() {
@@ -337,6 +348,11 @@ pub fn handle_place_block(
         let Some(block) = item.places_block else {
             continue;
         };
+        // Machine kits are handled by `placement::handle_machine_placement`, which spawns the
+        // block entity as well as the block.
+        if matches!(item.category, ItemCategory::MachineKit(_)) {
+            continue;
+        }
         stack.count -= 1;
         if stack.count == 0 {
             *stack = ItemStack::EMPTY;
@@ -396,9 +412,7 @@ pub fn report_outcome(
 pub fn outcome_code(verdict: MiningVerdict) -> (u8, u8) {
     match verdict {
         MiningVerdict::CanMine { .. } => (mining_outcome::OK, 0),
-        MiningVerdict::TooHard { required_tier } => {
-            (mining_outcome::TOO_HARD, required_tier)
-        }
+        MiningVerdict::TooHard { required_tier } => (mining_outcome::TOO_HARD, required_tier),
         MiningVerdict::Unbreakable => (mining_outcome::UNBREAKABLE, 0),
         MiningVerdict::Empty => (mining_outcome::NOT_LOADED, 0),
     }

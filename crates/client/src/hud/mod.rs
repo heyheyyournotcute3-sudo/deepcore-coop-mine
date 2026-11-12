@@ -16,18 +16,17 @@ pub struct HudPlugin;
 
 impl Plugin for HudPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, setup_hud)
-            .add_systems(
-                Update,
-                (
-                    update_crosshair,
-                    update_hotbar,
-                    update_vitals,
-                    update_depth,
-                    update_notifications,
-                    update_debug_overlay,
-                ),
-            );
+        app.add_systems(Startup, setup_hud).add_systems(
+            Update,
+            (
+                update_crosshair,
+                update_hotbar,
+                update_vitals,
+                update_depth,
+                update_notifications,
+                update_debug_overlay,
+            ),
+        );
     }
 }
 
@@ -291,11 +290,7 @@ fn update_hotbar(
     }
 }
 
-fn update_vitals(
-    session: Res<SessionState>,
-    hud: Res<HudState>,
-    mut texts: Query<&mut Text>,
-) {
+fn update_vitals(session: Res<SessionState>, hud: Res<HudState>, mut texts: Query<&mut Text>) {
     let Ok(mut text) = texts.get_mut(hud.vitals) else {
         return;
     };
@@ -309,10 +304,7 @@ fn update_vitals(
     let health = session_vitals(&session);
     text.0 = format!(
         "Health  {:.0}\nOxygen  {:.0}\nDose    {:.0}\nSuit    {}",
-        health.0,
-        health.1,
-        health.2,
-        health.3
+        health.0, health.1, health.2, health.3
     );
 }
 
@@ -412,7 +404,13 @@ fn update_debug_overlay(
     let stats = session
         .stats
         .as_ref()
-        .map(|stats| format!("{} electric / {} steam networks", stats.electric.len(), stats.steam.len()))
+        .map(|stats| {
+            format!(
+                "{} electric / {} steam networks",
+                stats.electric.len(),
+                stats.steam.len()
+            )
+        })
         .unwrap_or_else(|| "no power stats".to_owned());
     text.0 = format!(
         "FPS {fps:.0}\nchunks {}\npos {:.1} {:.1} {:.1}\ncorrections {}\n{}\nyaw {:.2} pitch {:.2}",

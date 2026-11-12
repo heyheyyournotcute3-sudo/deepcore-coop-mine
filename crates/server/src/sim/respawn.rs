@@ -55,9 +55,10 @@ pub fn handle_respawn(
         }
 
         // Drop the backpack as a crate at the death spot, keeping the hotbar.
-        let death_pos = state.death_crate.take().unwrap_or_else(|| {
-            BlockPos::from_vec3(state.body.position)
-        });
+        let death_pos = state
+            .death_crate
+            .take()
+            .unwrap_or_else(|| BlockPos::from_vec3(state.body.position));
         let backpack: Vec<ItemStack> = state
             .inventory
             .backpack

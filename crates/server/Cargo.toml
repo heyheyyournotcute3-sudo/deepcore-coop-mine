@@ -5,6 +5,10 @@ edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 
+[lib]
+name = "deepcore_server"
+path = "src/lib.rs"
+
 [[bin]]
 name = "deepcore-server"
 path = "src/main.rs"

@@ -68,7 +68,10 @@ fn open_save(
     let dir = PathBuf::from(&config.0.save_dir).join(format!("world-{:016x}", config.0.seed));
     let regions = dir.join("regions");
     if let Err(error) = fs::create_dir_all(&regions) {
-        warn!("cannot create save directory {}: {error}", regions.display());
+        warn!(
+            "cannot create save directory {}: {error}",
+            regions.display()
+        );
         return;
     }
     let db_path = dir.join("deepcore.sqlite");
@@ -159,7 +162,9 @@ pub fn decode_chunk(bytes: &[u8]) -> Option<deepcore_shared::voxel::Chunk> {
         *slot = value;
     }
     let _ = chunk;
-    Some(deepcore_shared::voxel::Chunk::from_palette(palette, &indices))
+    Some(deepcore_shared::voxel::Chunk::from_palette(
+        palette, &indices,
+    ))
 }
 
 /// Autosaves modified chunks, players and the tech tree every five minutes.
@@ -247,7 +252,10 @@ pub fn save_world(
     }
     manager.dirty.clear();
 
-    let db = save.db.get_mut().expect("save connection is never poisoned");
+    let db = save
+        .db
+        .get_mut()
+        .expect("save connection is never poisoned");
     for (name, position, state) in players {
         let _ = db.execute(
             "INSERT INTO players (name, position_x, position_y, position_z, health, inventory)
@@ -344,8 +352,8 @@ pub fn read_region(path: &Path) -> Vec<(ChunkPos, deepcore_shared::voxel::Chunk)
 #[cfg(test)]
 mod tests {
     use super::*;
-    use deepcore_shared::voxel::{CHUNK_VOLUME, Chunk};
     use bevy::math::UVec3;
+    use deepcore_shared::voxel::{CHUNK_VOLUME, Chunk};
 
     #[test]
     fn chunk_round_trips_through_the_region_format() {

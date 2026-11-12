@@ -52,14 +52,7 @@ pub fn build_atlas_image(content: &ContentRegistry) -> Image {
         let row = index / ATLAS_COLUMNS;
         for y in 0..TILE {
             for x in 0..TILE {
-                let pixel = shade(
-                    block.pattern,
-                    block.color,
-                    block.emissive,
-                    x,
-                    y,
-                    index,
-                );
+                let pixel = shade(block.pattern, block.color, block.emissive, x, y, index);
                 let px = column * TILE + x;
                 let py = row * TILE + y;
                 let offset = ((py * size.x + px) * 4) as usize;
@@ -88,14 +81,22 @@ pub fn build_atlas_image(content: &ContentRegistry) -> Image {
 
 /// A deterministic hash for per-tile speckle, so the same block always looks the same.
 fn hash(x: u32, y: u32, seed: u32) -> f32 {
-    let mut value = x.wrapping_mul(0x9E37_79B9) ^ y.wrapping_mul(0x85EB_CA6B) ^ seed.wrapping_mul(0xC2B2_AE35);
+    let mut value =
+        x.wrapping_mul(0x9E37_79B9) ^ y.wrapping_mul(0x85EB_CA6B) ^ seed.wrapping_mul(0xC2B2_AE35);
     value ^= value >> 13;
     value = value.wrapping_mul(0x27D4_EB2D);
     value ^= value >> 15;
     (value & 0xFFFF) as f32 / 65535.0
 }
 
-fn shade(pattern: Pattern, color: (f32, f32, f32), emissive: f32, x: u32, y: u32, seed: u32) -> [u8; 3] {
+fn shade(
+    pattern: Pattern,
+    color: (f32, f32, f32),
+    emissive: f32,
+    x: u32,
+    y: u32,
+    seed: u32,
+) -> [u8; 3] {
     let mut rgb = [color.0, color.1, color.2];
     let noise = hash(x, y, seed);
     let noise2 = hash(x / 2, y / 2, seed ^ 0x1234);

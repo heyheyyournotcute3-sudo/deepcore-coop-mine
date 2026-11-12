@@ -83,7 +83,9 @@ impl Default for MovementConfig {
 }
 
 /// One frame of player input, quantised so client and server agree bit-for-bit.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Message, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Default, Message, serde::Serialize, serde::Deserialize,
+)]
 pub struct PlayerInput {
     /// Sequence number, echoed back by the server for reconciliation.
     pub seq: u32,
@@ -121,7 +123,11 @@ impl PlayerInput {
         let yaw = self.yaw_radians();
         let (sin, cos) = yaw.sin_cos();
         // -Z is forward when yaw is zero.
-        let dir = Vec3::new(-sin * forward + cos * right, 0.0, -cos * forward - sin * right);
+        let dir = Vec3::new(
+            -sin * forward + cos * right,
+            0.0,
+            -cos * forward - sin * right,
+        );
         if dir.length_squared() > 1.0 {
             dir.normalize()
         } else {
@@ -201,7 +207,11 @@ pub fn step_body(
             0.0
         };
     } else if state.in_fluid {
-        state.velocity.y = approach(state.velocity.y, if input.jump { 3.4 } else { -1.8 }, 30.0 * MOVE_DT);
+        state.velocity.y = approach(
+            state.velocity.y,
+            if input.jump { 3.4 } else { -1.8 },
+            30.0 * MOVE_DT,
+        );
     } else {
         state.velocity.y -= config.gravity * MOVE_DT;
         state.velocity.y = state.velocity.y.max(-TERMINAL_SPEED);
@@ -217,11 +227,8 @@ pub fn step_body(
     move_axis(state, world, Vec3::Z);
 
     // Ground probe: a hair below the feet.
-    state.on_ground = state.velocity.y <= 0.0001
-        && collides(
-            world,
-            state.position - Vec3::new(0.0, 0.02, 0.0),
-        );
+    state.on_ground =
+        state.velocity.y <= 0.0001 && collides(world, state.position - Vec3::new(0.0, 0.02, 0.0));
 
     if state.on_ladder {
         state.on_ground = true;
@@ -375,7 +382,11 @@ mod tests {
             step_body(&mut body, PlayerInput::default(), &world, &config);
         }
         assert!(body.on_ground, "body should have landed");
-        assert!((body.position.y - 1.0).abs() < 0.05, "y = {}", body.position.y);
+        assert!(
+            (body.position.y - 1.0).abs() < 0.05,
+            "y = {}",
+            body.position.y
+        );
     }
 
     #[test]

@@ -17,7 +17,13 @@ use crate::sim::player::{OwnedBy, Player, PlayerState};
 #[allow(clippy::too_many_arguments)]
 pub fn handle_interaction(
     mut intents: MessageReader<FromClient<ClientIntent>>,
-    mut players: Query<(&mut PlayerState, &deepcore_shared::protocol::NetworkPosition), With<Player>>,
+    mut players: Query<
+        (
+            &mut PlayerState,
+            &deepcore_shared::protocol::NetworkPosition,
+        ),
+        With<Player>,
+    >,
     clients: Query<&OwnedBy>,
     index: Res<BlockEntityIndex>,
     mut crates: Query<&mut CrateEntity>,

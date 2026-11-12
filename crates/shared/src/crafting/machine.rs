@@ -33,7 +33,9 @@ impl IdleReason {
             IdleReason::NoPower => "No power".into(),
             IdleReason::MissingInput(item) => format!(
                 "Missing {}",
-                content.item(*item).map_or("input", |item| item.name.as_str())
+                content
+                    .item(*item)
+                    .map_or("input", |item| item.name.as_str())
             ),
             IdleReason::CascadeTooShort => "Cascade too short".into(),
             IdleReason::Idle => "Idle".into(),
@@ -288,7 +290,10 @@ pub fn tick_machine(
 ) -> bool {
     let (module_speed, _) = inventory.module_multipliers(content);
     let def = content.machine(machine);
-    let is_fuel = matches!(def.map(|machine| machine.energy), Some(MachineEnergy::Fuel { .. }));
+    let is_fuel = matches!(
+        def.map(|machine| machine.energy),
+        Some(MachineEnergy::Fuel { .. })
+    );
 
     // Fuel machines burn their own fuel; everything else needs external power.
     if is_fuel && state.recipe.is_none() && state.fuel_seconds <= 0.0 {
@@ -306,7 +311,8 @@ pub fn tick_machine(
             Some(recipe) => {
                 state.recipe = Some(recipe.id);
                 state.progress = 0.0;
-                state.duration = (recipe.time / (module_speed * power_fraction.max(0.01))).max(0.01);
+                state.duration =
+                    (recipe.time / (module_speed * power_fraction.max(0.01))).max(0.01);
                 state.running = false;
             }
             None => {
@@ -359,7 +365,11 @@ pub fn tick_machine(
     false
 }
 
-fn burn_fuel(content: &ContentRegistry, inventory: &mut MachineInventory, state: &mut MachineState) {
+fn burn_fuel(
+    content: &ContentRegistry,
+    inventory: &mut MachineInventory,
+    state: &mut MachineState,
+) {
     for slot in inventory.fuel.iter_mut() {
         if slot.is_empty() {
             continue;
@@ -419,7 +429,11 @@ fn diagnose(
 }
 
 /// The power a machine draws in kW from the electric network.
-pub fn machine_draw_kw(content: &ContentRegistry, machine: ContentId, recipe: Option<ContentId>) -> f32 {
+pub fn machine_draw_kw(
+    content: &ContentRegistry,
+    machine: ContentId,
+    recipe: Option<ContentId>,
+) -> f32 {
     let Some(def) = content.machine(machine) else {
         return 0.0;
     };
@@ -458,7 +472,15 @@ mod tests {
         let unlocked = |_tech: ContentId| true;
         let mut produced = 0;
         for _ in 0..1000 {
-            if tick_machine(&content, furnace, &mut inventory, &mut state, 0.1, 1.0, &unlocked) {
+            if tick_machine(
+                &content,
+                furnace,
+                &mut inventory,
+                &mut state,
+                0.1,
+                1.0,
+                &unlocked,
+            ) {
                 produced += 1;
             }
             if produced == 2 {
@@ -467,7 +489,11 @@ mod tests {
         }
         assert_eq!(produced, 2);
         assert_eq!(
-            inventory.outputs.iter().map(|stack| stack.count).sum::<u32>(),
+            inventory
+                .outputs
+                .iter()
+                .map(|stack| stack.count)
+                .sum::<u32>(),
             2
         );
         assert_eq!(inventory.outputs[0].item, iron_ingot);
@@ -482,7 +508,15 @@ mod tests {
         inventory.inputs[0] = ItemStack::new(raw_iron, 2);
         let mut state = MachineState::default();
         let unlocked = |_tech: ContentId| true;
-        tick_machine(&content, crusher, &mut inventory, &mut state, 0.1, 0.0, &unlocked);
+        tick_machine(
+            &content,
+            crusher,
+            &mut inventory,
+            &mut state,
+            0.1,
+            0.0,
+            &unlocked,
+        );
         assert_eq!(state.idle, IdleReason::NoPower);
     }
 
@@ -497,7 +531,15 @@ mod tests {
         let mut state = MachineState::default();
         let locked = |_tech: ContentId| false;
         for _ in 0..100 {
-            tick_machine(&content, furnace, &mut inventory, &mut state, 0.1, 1.0, &locked);
+            tick_machine(
+                &content,
+                furnace,
+                &mut inventory,
+                &mut state,
+                0.1,
+                1.0,
+                &locked,
+            );
         }
         assert!(state.recipe.is_none());
         assert_eq!(inventory.inputs[0].count, 1);
@@ -519,7 +561,15 @@ mod tests {
         let mut state = MachineState::default();
         let unlocked = |_tech: ContentId| true;
         for _ in 0..100 {
-            tick_machine(&content, furnace, &mut inventory, &mut state, 0.1, 1.0, &unlocked);
+            tick_machine(
+                &content,
+                furnace,
+                &mut inventory,
+                &mut state,
+                0.1,
+                1.0,
+                &unlocked,
+            );
         }
         assert_eq!(state.idle, IdleReason::OutputFull);
     }

@@ -360,12 +360,14 @@ impl ContentRegistry {
                     })?;
                     registry.block_for_machine(machine_id)
                 }
-                ItemCategory::Block(block) => Some(registry.block_ids.get(block).ok_or_else(|| {
-                    ContentError::Invalid(format!(
-                        "item `{}` places unknown block `{block}`",
-                        def.id
-                    ))
-                })?),
+                ItemCategory::Block(block) => {
+                    Some(registry.block_ids.get(block).ok_or_else(|| {
+                        ContentError::Invalid(format!(
+                            "item `{}` places unknown block `{block}`",
+                            def.id
+                        ))
+                    })?)
+                }
                 _ => None,
             };
             registry.items.push(Item {
@@ -634,6 +636,30 @@ impl ContentRegistry {
             if recipe.outputs.is_empty() {
                 problems.push(format!("recipe `{}` has no outputs", recipe.key));
             }
+            // A recipe that needs more ingredients than its machine has input slots can never
+            // run. This is exactly the bug that made the Nuclear Drill uncraftable.
+            if let Some(machine) = self.machine(recipe.machine)
+                && recipe.inputs.len() > machine.input_slots as usize
+            {
+                problems.push(format!(
+                    "recipe `{}` needs {} input slots but machine `{}` has {}",
+                    recipe.key,
+                    recipe.inputs.len(),
+                    machine.key,
+                    machine.input_slots
+                ));
+            }
+            if let Some(machine) = self.machine(recipe.machine)
+                && recipe.outputs.len() > machine.output_slots as usize
+            {
+                problems.push(format!(
+                    "recipe `{}` produces {} output stacks but machine `{}` has {} output slots",
+                    recipe.key,
+                    recipe.outputs.len(),
+                    machine.key,
+                    machine.output_slots
+                ));
+            }
             if recipe.inputs.is_empty() && recipe.machine != self.hand_machine {
                 problems.push(format!("recipe `{}` has no inputs", recipe.key));
             }
@@ -641,10 +667,12 @@ impl ContentRegistry {
 
         // Every machine with a build cost must be buildable: a machine kit item must exist.
         for machine in &self.machines {
-            let has_kit = self
-                .items
-                .iter()
-                .any(|item| item.places_block.and_then(|b| self.block(b)).and_then(|b| b.machine) == Some(machine.id));
+            let has_kit = self.items.iter().any(|item| {
+                item.places_block
+                    .and_then(|b| self.block(b))
+                    .and_then(|b| b.machine)
+                    == Some(machine.id)
+            });
             if !has_kit && machine.build_cost.is_empty() {
                 problems.push(format!(
                     "machine `{}` has no build cost and no kit item",
@@ -708,7 +736,10 @@ impl ContentRegistry {
             if item.places_block.is_some() {
                 used.insert(item.id, true);
             }
-            if matches!(item.category, ItemCategory::Tool { .. } | ItemCategory::Gear { .. }) {
+            if matches!(
+                item.category,
+                ItemCategory::Tool { .. } | ItemCategory::Gear { .. }
+            ) {
                 used.insert(item.id, true);
             }
             // Fuels, charges and items with a declared system sink are consumed by systems.
@@ -772,11 +803,7 @@ impl ContentRegistry {
             match visiting[node.index()] {
                 2 => continue,
                 1 => {
-                    return Err(self
-                        .tech_ids
-                        .name(node)
-                        .unwrap_or("?")
-                        .to_owned());
+                    return Err(self.tech_ids.name(node).unwrap_or("?").to_owned());
                 }
                 _ => {}
             }

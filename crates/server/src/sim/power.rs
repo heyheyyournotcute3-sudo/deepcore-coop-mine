@@ -89,5 +89,3 @@ pub fn register_battery(networks: &mut PowerNetworks, entity: Entity, capacity_k
         );
     }
 }
-
-

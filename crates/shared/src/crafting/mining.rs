@@ -252,7 +252,10 @@ mod tests {
     #[test]
     fn placement_goes_into_the_face_normal() {
         let target = BlockPos::new(0, 0, 0);
-        assert_eq!(placement_position(target, BlockFace::Up), BlockPos::new(0, 1, 0));
+        assert_eq!(
+            placement_position(target, BlockFace::Up),
+            BlockPos::new(0, 1, 0)
+        );
         assert_eq!(
             placement_position(target, BlockFace::North),
             BlockPos::new(0, 0, -1)

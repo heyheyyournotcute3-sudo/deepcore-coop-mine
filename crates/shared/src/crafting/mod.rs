@@ -47,7 +47,11 @@ impl TechTree {
         }
         content
             .tech(node)
-            .map(|tech| tech.parents.iter().all(|parent| self.is_researched(*parent)))
+            .map(|tech| {
+                tech.parents
+                    .iter()
+                    .all(|parent| self.is_researched(*parent))
+            })
             .unwrap_or(false)
     }
 
@@ -112,7 +116,9 @@ impl TechTree {
             if inventory.count_of(*item) < *count {
                 return Err(format!(
                     "not enough {}",
-                    content.item(*item).map_or("item", |item| item.name.as_str())
+                    content
+                        .item(*item)
+                        .map_or("item", |item| item.name.as_str())
                 ));
             }
         }

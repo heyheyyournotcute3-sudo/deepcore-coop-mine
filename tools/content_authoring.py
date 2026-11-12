@@ -42,7 +42,7 @@ MACHINES = [
     ("electric_pump", "Electric Pump", (1, 1, 1), 'Electric { kw: 20.0 }', 1, 1, [("steel_plate", 6), ("copper_pipe", 6), ("circuit_mk1", 1)], "ventilation", {}),
     ("chemical_plant", "Chemical Plant", (3, 3, 2), 'Electric { kw: 80.0 }', 3, 3, [("stainless_steel", 12), ("glass_block_item", 6), ("circuit_mk2", 2)], "chemistry", {"modules": "true"}),
     ("alloy_furnace", "Alloy Furnace", (2, 3, 2), 'Electric { kw: 90.0 }', 3, 2, [("fire_brick", 30), ("steel_plate", 16), ("graphite_electrode", 6)], "advanced_alloys", {"modules": "true"}),
-    ("machine_shop", "Machine Shop", (3, 2, 2), 'Electric { kw: 70.0 }', 3, 3, [("stainless_steel", 10), ("tungsten_carbide", 4), ("circuit_mk2", 3)], "precision_machining", {"modules": "true"}),
+    ("machine_shop", "Machine Shop", (3, 2, 2), 'Electric { kw: 70.0 }', 4, 3, [("stainless_steel", 10), ("tungsten_carbide", 4), ("circuit_mk2", 3)], "precision_machining", {"modules": "true"}),
     ("rare_earth_separator", "Rare-Earth Separator", (2, 2, 2), 'Electric { kw: 110.0 }', 2, 2, [("stainless_steel", 8), ("circuit_mk2", 2), ("centrifuge_rotor", 2)], "rare_earths", {"modules": "true"}),
     ("decon_shower", "Decon Shower", (1, 2, 1), 'Electric { kw: 25.0 }', 1, 1, [("lead_plate", 8), ("copper_pipe", 6), ("circuit_mk1", 1)], "hazard_gear", {}),
     ("leaching_tank", "Leaching Tank", (2, 2, 2), 'Electric { kw: 40.0 }', 2, 2, [("stainless_steel", 10), ("lead_plate", 6), ("circuit_mk2", 2)], "uranium_milling", {"modules": "true"}),
@@ -475,22 +475,22 @@ recipe("craft_hazmat_suit", "machine_shop", 18.0, [("lead_plate", 6), ("glass", 
 recipe("craft_tungsten_drill", "machine_shop", 24.0, [("tungsten_carbide", 6), ("stainless_steel", 4), ("battery_pack", 2)], [("tungsten_carbide_drill", 1)], "tungsten_drill", power=80.0)
 
 # --- Era 5: the nuclear chain ---------------------------------------------------------------------
-recipe("leach_uranium", "leaching_tank", 20.0, [("crushed_uranium_ore", 2), ("sulfuric_acid", 1)],
+recipe("leach_uranium", "leaching_tank", 20.0, [("crushed_uranium_ore", 4), ("sulfuric_acid", 2)],
        [("uranium_solution", 1), ("radioactive_tailings", 1)], "uranium_milling", power=40.0)
-recipe("precipitate_uranium", "precipitator", 16.0, [("uranium_solution", 1), ("lye", 1)],
+recipe("precipitate_uranium", "precipitator", 16.0, [("uranium_solution", 2), ("lye", 2)],
        [("yellowcake", 1)], "uranium_milling", power=35.0)
-recipe("convert_uranium", "conversion_plant", 24.0, [("yellowcake", 1), ("fluorine_compound", 1)],
+recipe("convert_uranium", "conversion_plant", 24.0, [("yellowcake", 2), ("fluorine_compound", 2)],
        [("uranium_hexafluoride", 1)], "conversion", power=110.0)
-recipe("enrich_uranium", "centrifuge", 30.0, [("uranium_hexafluoride", 1)],
-       [("enriched_canister", 1), ("depleted_canister", 1)], "enrichment", power=150.0)
+recipe("enrich_uranium", "centrifuge", 30.0, [("uranium_hexafluoride", 8)],
+       [("enriched_canister", 1), ("depleted_canister", 7)], "enrichment", power=150.0)
 recipe("fabricate_fuel_rod", "fuel_fabricator", 20.0, [("enriched_canister", 1), ("zirconium_tubing", 1)],
        [("fuel_rod", 1)], "fuel_fabrication", power=100.0)
-recipe("fabricate_core_cell", "fuel_fabricator", 30.0, [("enriched_canister", 1), ("stainless_steel", 2), ("lead_plate", 2)],
+recipe("fabricate_core_cell", "fuel_fabricator", 30.0, [("enriched_canister", 2), ("stainless_steel", 4), ("lead_plate", 4)],
        [("compact_core_cell", 1)], "fuel_fabrication", power=120.0)
 recipe("recycle_spent_fuel", "cooling_pool", 60.0, [("spent_fuel_rod", 1)], [("waste_cask", 1)], "waste_handling", power=25.0)
 recipe("recycle_spent_cell", "cooling_pool", 60.0, [("spent_core_cell", 1)], [("waste_cask", 1)], "waste_handling", power=25.0)
 recipe("craft_nuclear_drill", "machine_shop", 40.0,
-       [("compact_core_cell", 1), ("tungsten_carbide_drill_head", 1), ("rare_earth_magnet", 4), ("lead_shielding", 4)],
+       [("compact_core_cell", 1), ("tungsten_carbide_drill_head", 1), ("rare_earth_magnet", 6), ("lead_shielding", 8)],
        [("nuclear_drill", 1)], "nuclear_drill", power=120.0)
 
 

@@ -275,7 +275,9 @@ impl WorldGenerator {
         // --- the Base ------------------------------------------------------------------
         // A flat, cave-free camp area around the spawn point, so the surface camp is usable
         // and the first thing a player sees is not a hole.
-        let camp_radius = (WORLD_HORIZONTAL / 2 - x).abs().min((WORLD_HORIZONTAL / 2 - z).abs());
+        let camp_radius = (WORLD_HORIZONTAL / 2 - x)
+            .abs()
+            .min((WORLD_HORIZONTAL / 2 - z).abs());
         if camp_radius <= CAMP_RADIUS && depth <= CAMP_DEPTH {
             return layer.base_block;
         }
@@ -284,11 +286,14 @@ impl WorldGenerator {
         let cave_density = layer.cave_density as f64;
         if cave_density > 0.0 && depth > 2 {
             let tunnel_a = self.cave_a.get([fx * 0.018, fy * 0.028, fz * 0.018]);
-            let tunnel_b = self.cave_b.get([fx * 0.018 + 41.0, fy * 0.028, fz * 0.018 - 17.0]);
+            let tunnel_b = self
+                .cave_b
+                .get([fx * 0.018 + 41.0, fy * 0.028, fz * 0.018 - 17.0]);
             // Tunnels: where both fields are near zero we get a tube-like intersection.
             let tunnel = tunnel_a.abs() + tunnel_b.abs() < 0.085 / cave_density.sqrt();
             // Caverns: large blobby voids, rarer.
-            let cavern = self.cavern.get([fx * 0.012, fy * 0.02, fz * 0.012]) > 0.62 - 0.12 * cave_density;
+            let cavern =
+                self.cavern.get([fx * 0.012, fy * 0.02, fz * 0.012]) > 0.62 - 0.12 * cave_density;
             if tunnel || cavern {
                 // Caves are flooded only in layers that declare the flooding hazard; the water
                 // itself is placed by the pocket pass.
@@ -406,7 +411,12 @@ pub fn camp_height() -> i32 {
 /// The surface height at a column: the topmost solid block plus one.
 ///
 /// The Base sits on this, so machines and players are never buried by a hill or a cave.
-pub fn surface_height(generator: &WorldGenerator, content: &ContentRegistry, x: i32, z: i32) -> i32 {
+pub fn surface_height(
+    generator: &WorldGenerator,
+    content: &ContentRegistry,
+    x: i32,
+    z: i32,
+) -> i32 {
     let mut y = SURFACE_Y + 2;
     // Walk down from just above the surface until a solid block is found.
     for candidate in (SURFACE_Y - 6..=SURFACE_Y + 3).rev() {
@@ -529,10 +539,8 @@ mod perf_tests {
                 // Sample a band of chunks spread over the layer's depth.
                 let chunk_y = (SURFACE_Y - layer.depth.0 as i32) / 32;
                 for index in 0..12 {
-                    let chunk = generator.generate_chunk(
-                        ChunkPos::new(40 + index * 3, chunk_y - 1, 40),
-                        &content,
-                    );
+                    let chunk = generator
+                        .generate_chunk(ChunkPos::new(40 + index * 3, chunk_y - 1, 40), &content);
                     if chunk.palette().contains(&ore.0) {
                         found += 1;
                     }
@@ -570,13 +578,22 @@ mod spawn_tests {
             }
         }
         // The feet are above solid ground, and the head is in air.
-        assert!(chunks.is_solid(spawn.offset(0, -1, 0), &content), "no ground under the spawn");
+        assert!(
+            chunks.is_solid(spawn.offset(0, -1, 0), &content),
+            "no ground under the spawn"
+        );
         assert!(!chunks.is_solid(spawn, &content), "spawn block is solid");
-        assert!(!chunks.is_solid(spawn.offset(0, 1, 0), &content), "head block is solid");
+        assert!(
+            !chunks.is_solid(spawn.offset(0, 1, 0), &content),
+            "head block is solid"
+        );
         // The whole camp is flat.
         for offset in [-20, 0, 20] {
             let column = spawn.offset(offset, -1, offset);
-            assert!(chunks.is_solid(column, &content), "camp is not flat at {offset}");
+            assert!(
+                chunks.is_solid(column, &content),
+                "camp is not flat at {offset}"
+            );
             assert!(!chunks.is_solid(column.offset(0, 1, 0), &content));
         }
     }

@@ -9,8 +9,8 @@ use std::collections::HashMap;
 use bevy::prelude::*;
 use bevy_replicon::prelude::*;
 use deepcore_shared::content::{ContentId, ContentRegistry, ItemCategory, MachineEnergy};
-use deepcore_shared::crafting::{MachineInventory, MachineState, tick_machine};
 use deepcore_shared::crafting::machine::machine_draw_kw;
+use deepcore_shared::crafting::{MachineInventory, MachineState, tick_machine};
 use deepcore_shared::inventory::{ItemStack, SlotRef};
 use deepcore_shared::protocol::{
     BlockEntityKind, ClientIntent, FromClient, MachineReplica, MachineScreen, ServerNotice,
@@ -143,11 +143,7 @@ pub fn place_machine(
 
 /// Ticks every machine: power demand, recipe progress, reactor physics.
 pub fn tick_machines(
-    mut machines: Query<(
-        Entity,
-        &mut MachineEntity,
-        &mut MachineReplica,
-    )>,
+    mut machines: Query<(Entity, &mut MachineEntity, &mut MachineReplica)>,
     content: Res<ContentRegistry>,
     tech: Res<TechStateResource>,
     networks: Res<deepcore_shared::power::PowerNetworks>,
@@ -159,10 +155,8 @@ pub fn tick_machines(
             Some(def) => def,
             None => continue,
         };
-        let satisfaction = networks.satisfaction_for(
-            deepcore_shared::power::NetworkKind::Electric,
-            entity,
-        );
+        let satisfaction =
+            networks.satisfaction_for(deepcore_shared::power::NetworkKind::Electric, entity);
         // Split the machine fields so the recipe tick can borrow both at once.
         let MachineEntity {
             machine: machine_id,
@@ -295,7 +289,10 @@ pub fn handle_machine_intents(
                     message: screen_message(&content, &machine),
                 });
             }
-            ClientIntent::SetMachineRecipe { machine: pos, recipe } => {
+            ClientIntent::SetMachineRecipe {
+                machine: pos,
+                recipe,
+            } => {
                 let Some(&entity) = index.by_position.get(pos) else {
                     continue;
                 };
@@ -457,9 +454,13 @@ pub fn machine_transfer(
     use deepcore_shared::protocol::ContainerId;
     let (source, destination) = (from, to);
     // Player → machine.
-    if matches!(source.container, ContainerId::Hotbar | ContainerId::Backpack)
-        && !matches!(destination.container, ContainerId::Hotbar | ContainerId::Backpack)
-    {
+    if matches!(
+        source.container,
+        ContainerId::Hotbar | ContainerId::Backpack
+    ) && !matches!(
+        destination.container,
+        ContainerId::Hotbar | ContainerId::Backpack
+    ) {
         let Some(slot) = player_slot(source) else {
             return;
         };
@@ -492,9 +493,13 @@ pub fn machine_transfer(
         {
             *player_slot = from_stack;
         }
-    } else if !matches!(source.container, ContainerId::Hotbar | ContainerId::Backpack)
-        && matches!(destination.container, ContainerId::Hotbar | ContainerId::Backpack)
-    {
+    } else if !matches!(
+        source.container,
+        ContainerId::Hotbar | ContainerId::Backpack
+    ) && matches!(
+        destination.container,
+        ContainerId::Hotbar | ContainerId::Backpack
+    ) {
         // Machine → player.
         let Some(target) = player_slot(destination) else {
             return;
