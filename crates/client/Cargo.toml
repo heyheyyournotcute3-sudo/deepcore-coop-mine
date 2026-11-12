@@ -1,0 +1,11 @@
+[package]
+name="deepcore-client"
+version.workspace=true
+edition.workspace=true
+
+[dependencies]
+deepcore-shared={workspace=true}
+bevy={workspace=true}
+bevy_egui={workspace=true}
+bevy_replicon={workspace=true}
+bevy_replicon_renet={workspace=true}

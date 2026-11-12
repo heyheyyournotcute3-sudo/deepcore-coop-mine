@@ -1,0 +1,8 @@
+[package]
+name="deepcore-server"
+version.workspace=true
+edition.workspace=true
+
+[dependencies]
+deepcore-shared={workspace=true}
+bevy={workspace=true}
