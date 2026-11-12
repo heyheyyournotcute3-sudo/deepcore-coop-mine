@@ -1,0 +1,40 @@
+# A complete Deepcore stack: lobby + one dedicated server.
+#
+#   docker compose up --build
+#   # clients connect to <host>:24288, the server browser talks to <host>:24289
+
+services:
+  lobby:
+    build:
+      context: .
+      dockerfile: Dockerfile.lobby
+    ports:
+      - "24289:24289"
+    volumes:
+      - lobby-data:/data
+    restart: unless-stopped
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    ports:
+      - "24288:24288/udp"
+    volumes:
+      - server-saves:/deepcore/saves
+    environment:
+      RUST_LOG: info
+    command:
+      - "--port"
+      - "24288"
+      - "--name"
+      - "Deepcore Co-op"
+      - "--lobby"
+      - "http://lobby:24289"
+    depends_on:
+      - lobby
+    restart: unless-stopped
+
+volumes:
+  lobby-data:
+  server-saves:

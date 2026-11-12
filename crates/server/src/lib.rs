@@ -57,6 +57,15 @@ pub struct ServerArgs {
     /// Server name shown in the server browser.
     #[arg(long, default_value = "Deepcore")]
     pub name: String,
+    /// Lobby service URL, empty for an open LAN server.
+    #[arg(long, default_value = "")]
+    pub lobby: String,
+    /// Refuse players without a valid lobby account.
+    #[arg(long, default_value_t = false)]
+    pub require_account: bool,
+    /// Public host name advertised to the lobby.
+    #[arg(long)]
+    pub public_host: Option<String>,
 }
 
 /// The protocol id used by renet's netcode: changing the protocol version changes the id, so
@@ -102,6 +111,7 @@ pub fn run() -> anyhow::Result<()> {
     app.init_resource::<world::WorldManager>();
     app.add_plugins((
         net::NetPlugin,
+        net::lobby::LobbyPlugin,
         world::ServerWorldPlugin,
         sim::SimPlugin,
         persistence::PersistencePlugin,
@@ -157,6 +167,9 @@ pub fn build_headless_app(seed: u64, content_dir: &str) -> App {
         simulate_loss: 0,
         bots: 0,
         name: "test".to_owned(),
+        lobby: String::new(),
+        require_account: false,
+        public_host: None,
     }));
     app.init_resource::<world::WorldManager>();
     app.add_plugins((world::ServerWorldPlugin, sim::SimPlugin));

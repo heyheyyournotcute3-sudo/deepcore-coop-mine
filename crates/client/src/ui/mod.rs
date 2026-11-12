@@ -9,6 +9,8 @@ use deepcore_shared::content::{ContentId, ContentRegistry, MachineEnergy};
 use deepcore_shared::inventory::ItemStack;
 use deepcore_shared::protocol::{ClientIntent, ContainerId, SlotAddress};
 
+pub mod browser;
+
 use crate::input::LocalInput;
 use crate::net::SessionState;
 
@@ -21,6 +23,7 @@ impl Plugin for UiPlugin {
             .init_resource::<UiIntents>()
             .add_systems(EguiPrimaryContextPass, (draw_ui, capture_pointer).chain())
             .add_systems(Update, flush_ui_intents)
+            .add_plugins(browser::BrowserPlugin)
             .add_systems(Update, (apply_ui_state, handle_objectives));
     }
 }
@@ -146,6 +149,7 @@ fn flush_ui_intents(mut ui: ResMut<UiIntents>, mut writer: MessageWriter<ClientI
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn draw_ui(
     mut contexts: EguiContexts,
     mut ui: ResMut<UiState>,
@@ -153,13 +157,15 @@ fn draw_ui(
     session: Res<SessionState>,
     content: Res<ContentRegistry>,
     mut input: ResMut<LocalInput>,
+    mut browser: ResMut<browser::ServerBrowser>,
+    mut join_address: Local<String>,
 ) {
     let Ok(ctx) = contexts.ctx_mut() else {
         return;
     };
 
     if ui.screen == Screen::MainMenu {
-        draw_main_menu(ctx, &mut ui, &session);
+        draw_main_menu(ctx, &mut ui, &session, &mut browser, &mut join_address);
         return;
     }
 
@@ -181,21 +187,74 @@ fn draw_ui(
     }
 }
 
-fn draw_main_menu(ctx: &mut egui::Context, ui: &mut UiState, session: &SessionState) {
+fn draw_main_menu(
+    ctx: &mut egui::Context,
+    ui: &mut UiState,
+    session: &SessionState,
+    browser: &mut browser::ServerBrowser,
+    join_address: &mut String,
+) {
     egui::Window::new("Deepcore")
-        .anchor(egui::Align2::CENTER_CENTER, [0.0, -60.0])
+        .anchor(egui::Align2::CENTER_CENTER, [0.0, -40.0])
         .collapsible(false)
-        .resizable(false)
+        .resizable(true)
         .show(ctx, |panel| {
             panel.heading("DEEPCORE");
             panel.label("A co-op mine from the topsoil to the mantle.");
-            panel.add_space(12.0);
-            if panel.button("Host game").clicked() {
+            panel.add_space(10.0);
+
+            panel.horizontal(|row| {
+                row.label("Address");
+                row.text_edit_singleline(join_address);
+                if row.button("Join by IP").clicked() {
+                    browser.join_request = Some(join_address.clone());
+                }
+            });
+            if panel.button("Host game (LAN)").clicked() {
                 ui.screen = Screen::Playing;
             }
-            if panel.button("Join by IP").clicked() {
-                ui.screen = Screen::Playing;
+
+            panel.separator();
+            if browser.enabled() {
+                panel.label(format!("Lobby: {}", browser.lobby_url));
+                if let Some(user) = &browser.username {
+                    panel.label(format!("Logged in as {user}"));
+                } else {
+                    panel.horizontal(|row| {
+                        row.label("Account");
+                        row.text_edit_singleline(&mut ui.chat_buffer);
+                        if row.button("Log in").clicked() {
+                            let password = ui.chat_buffer.clone();
+                            browser.login("player", &password);
+                        }
+                    });
+                }
+                if panel.button("Refresh servers").clicked() {
+                    browser.fetch_servers();
+                }
+                for server in &browser.servers {
+                    panel.horizontal(|row| {
+                        row.label(format!(
+                            "{}  ({}/{}){}",
+                            server.name,
+                            server.players,
+                            server.max_players,
+                            if server.requires_account {
+                                "  [account]"
+                            } else {
+                                ""
+                            }
+                        ));
+                        if row.button("Join").clicked() {
+                            browser.join_request = Some(server.address.clone());
+                        }
+                    });
+                }
+                panel.label(&browser.status);
+            } else {
+                panel.label("No lobby configured — join by IP or host a LAN game.");
             }
+
             if let Some(error) = &session.error {
                 panel.colored_label(egui::Color32::RED, error);
             }

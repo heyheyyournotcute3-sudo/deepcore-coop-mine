@@ -3,7 +3,7 @@
 Deepcore — co-op 3D voxel mining game in Rust (Bevy). This file is the hand-off note: a future
 session (possibly a different model) must be able to continue from this file alone.
 
-**Last updated:** M2 complete (multiplayer foundation working end to end).
+**Last updated:** M0–M4 + M8 nuclear chain + M10 lobby working end to end; 89 tests green.
 
 ---
 
@@ -69,16 +69,23 @@ Bevy 0.20 API notes that cost time and are worth remembering:
 | M0 | Workspace, four crates, pinned versions, `scripts/check.sh`, both binaries start | **done** |
 | M1 | Voxels, palette chunks, deterministic worldgen (6 layers, caves, ores), procedural atlas, greedy meshing, FPS controller, mining/placing, hotbar, depth meter | **done** |
 | M2 | Authoritative server + client, handshake (protocol + content hash), chunk streaming, replicated players, prediction/reconciliation, validated intents, latency flags | **mostly done** — see gaps below |
-| M3 | Content, inventory, crafting (Era 0) | partially: content + validator + inventory + hand crafting exist; UI is basic |
-| M4 | Machines, research, Era 1 | server side exists (machine tick, fuel, tech tree); no placement UI flow yet |
-| M5–M8 | Eras 2–5 | data + shared rules exist (steam/electric networks, nuclear chain recipes, reactor physics); machine placement/interaction UI incomplete |
-| M9 | Persistence | region files + SQLite autosave written; load-on-start not implemented |
-| M10 | Lobby | not started |
+| M3 | Content, inventory, crafting (Era 0) | **done** — validator, balance_report, inventory, hand crafting, death crate |
+| M4 | Machines, research, Era 1 | **done** — kit placement with ghost preview + footprint/tech checks, machine screens, fuel, tech tree UI |
+| M5 | Era 2 steam + logistics | shared rules + recipes + data **done**; conveyor/rail item movement is data-only |
+| M6 | Era 3 electricity | shared rules + recipes + data **done**; network overlay reads real stats |
+| M7 | Era 4 chemistry | shared rules + recipes + data **done** |
+| M8 | Era 5 nuclear | **done** — full chain tested end to end, reactor physics, waste, Nuclear Drill |
+| M9 | Persistence | save side **done** (region files + SQLite, atomic writes, autosave); load-on-start missing |
+| M10 | Lobby | **done** — accounts (argon2), tokens, server browser, heartbeat, Dockerfiles |
 
 ### What works right now (verified by running)
 
-* `cargo test --workspace`: **all green** (shared 57, client 9, server 2).
+* `cargo test --workspace`: **89 tests, all green** (shared 58, client 12, server 2 unit +
+  9 integration + 4 nuclear, lobby 4).
 * `cargo clippy --workspace --all-targets -- -D warnings`: clean.
+* The lobby serves live HTTP: `/health`, `/api/register`, `/api/login`, `/api/verify`,
+  `/api/servers`, `/api/servers/register`, `/api/servers/heartbeat`.
+* A dedicated server registers with the lobby and appears in the browser with its player count.
 * Server boots, binds UDP, generates chunks on worker threads, streams them to clients.
 * Client boots, builds the procedural atlas, connects, handshakes, receives chunks, decodes
   them, meshes them on the async pool, renders the terrain, follows the player, shows the HUD
@@ -89,11 +96,12 @@ Bevy 0.20 API notes that cost time and are worth remembering:
 
 ### Known gaps and bugs (in priority order)
 
-1. **Machine placement flow is not wired end to end.** `place_machine` exists on the server but
-   `PlaceBlock` does not yet route machine kits to it, and the client has no ghost preview. This
-   is the next milestone-sized task (M4).
-2. **Inventory UI is read-mostly.** Drag/split/quick-move intents exist server-side
-   (`MoveItems`), the egui screen issues them, but there is no slot-to-slot drag affordance.
+1. **Inventory UI has no drag affordance.** Click-to-move works (backpack → hotbar, machine
+   outputs → backpack) and the `MoveItems` intent is validated server-side, but there is no
+   drag-and-drop between arbitrary slots or a split-stack modifier.
+2. **Lobby login in the client menu is a stub.** `ServerBrowser::login`/`register` are complete
+   and tested at the service level, but the menu sends a placeholder username and reuses the
+   chat buffer for the password field. A proper two-field login form is needed.
 3. **Chunk unload** is implemented server-side (`unload_queue`) but never populated; clients
    keep every chunk they have received.
 4. **Persistence loads nothing on startup** — chunks/players/tech are saved but not restored.
@@ -101,10 +109,11 @@ Bevy 0.20 API notes that cost time and are worth remembering:
 6. **Bots** (`--bots N`) flag is parsed but not implemented.
 7. **Latency/loss simulation flags** are parsed; renet 2.0 has no built-in simulation hook, so
    the flags are inert. Implementing them needs a wrapping transport.
-8. Client `SessionState` fallback matches the local player by display name after 1 s if the
-   `LocalOwner` visibility-filter marker has not arrived; the marker path should be preferred
-   once it is confirmed on a real network.
+8. The client matches its own player by display name after 1 s if the `LocalOwner` visibility
+   marker has not arrived (it is the fallback path; the marker path is preferred).
 9. Audio device absent in headless environments logs a warning; harmless.
+10. **Rails, minecarts, conveyors, the Mine Lift** exist as blocks/recipes but items do not
+    travel on them yet.
 
 ## Architecture (where things live)
 
@@ -177,9 +186,10 @@ nuclear integration test, network convergence tests with simulated latency.
 
 ## Next session: start here
 
-1. Wire machine kits through `PlaceBlock` → `place_machine` (server) and add a ghost preview +
-   rotation on the client. Then the Era 1 loop is playable.
-2. Add headless app tests: build `App` with `sim::SimPlugin`, insert a player, send intents,
-   step `FixedUpdate`, assert the block was mined and the item appeared.
-3. Implement chunk unload and the loading screen progress gate.
-4. Implement save loading on startup.
+1. Implement save **loading** on startup (the save format and writers exist; the reader for
+   region files is `read_region`, players/tech are in SQLite).
+2. Item logistics: conveyors, item pipes and minecarts moving stacks between machine outputs and
+   inputs. The blocks, recipes and machine inventories are all in place.
+3. Inventory drag-and-drop and a real two-field lobby login form in the egui menu.
+4. Chunk unload messages and a loading-screen gate on the first 64 chunks.
+5. Bot clients (`--bots N`) for load and desync testing.

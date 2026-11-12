@@ -1,0 +1,47 @@
+# Deepcore dedicated server.
+#
+#   docker build -f Dockerfile.server -t deepcore-server .
+#   docker run -p 24288:24288/udp deepcore-server --port 24288
+#
+# Multi-stage: the builder compiles a release binary, the runtime image only carries the binary
+# and the content files, so it stays small.
+
+FROM rust:1.99-bookworm AS builder
+WORKDIR /build
+
+# System libraries Bevy needs to link (the server is headless but the same crate is built).
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    pkg-config libasound2-dev libudev-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# Cache dependencies separately from the source.
+COPY Cargo.toml Cargo.lock rustfmt.toml ./
+COPY crates/shared/Cargo.toml crates/shared/Cargo.toml
+COPY crates/server/Cargo.toml crates/server/Cargo.toml
+COPY crates/client/Cargo.toml crates/client/Cargo.toml
+COPY crates/lobby/Cargo.toml crates/lobby/Cargo.toml
+COPY tools/atlas_gen/Cargo.toml tools/atlas_gen/Cargo.toml
+RUN mkdir -p crates/shared/src crates/server/src crates/client/src crates/lobby/src tools/atlas_gen/src && \
+    echo 'fn main(){}' > crates/server/src/main.rs && \
+    echo 'fn main(){}' > crates/client/src/main.rs && \
+    echo 'fn main(){}' > crates/lobby/src/main.rs && \
+    echo 'pub fn x(){}' > crates/shared/src/lib.rs && \
+    echo 'fn main(){}' > tools/atlas_gen/src/main.rs && \
+    cargo build --release -p deepcore-server --bin deepcore-server || true
+
+COPY . .
+RUN cargo build --release -p deepcore-server --bin deepcore-server
+
+FROM debian:bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libasound2 libudev1 ca-certificates && \
+    rm -rf /var/lib/apt/lists/* && \
+    useradd -m -u 10001 deepcore
+WORKDIR /deepcore
+COPY --from=builder /build/target/release/deepcore-server /usr/local/bin/deepcore-server
+COPY --from=builder /build/assets ./assets
+RUN mkdir -p /deepcore/saves && chown -R deepcore /deepcore
+USER deepcore
+EXPOSE 24288/udp
+ENTRYPOINT ["deepcore-server"]
+CMD ["--port", "24288"]

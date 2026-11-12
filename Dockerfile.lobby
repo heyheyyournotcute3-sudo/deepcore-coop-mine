@@ -1,0 +1,37 @@
+# Deepcore lobby service (accounts, tokens, server browser).
+#
+#   docker build -f Dockerfile.lobby -t deepcore-lobby .
+#   docker run -p 24289:24289 -v deepcore-data:/data deepcore-lobby
+
+FROM rust:1.99-bookworm AS builder
+WORKDIR /build
+RUN apt-get update && apt-get install -y --no-install-recommends pkg-config && \
+    rm -rf /var/lib/apt/lists/*
+COPY Cargo.toml Cargo.lock ./
+COPY crates/shared/Cargo.toml crates/shared/Cargo.toml
+COPY crates/server/Cargo.toml crates/server/Cargo.toml
+COPY crates/client/Cargo.toml crates/client/Cargo.toml
+COPY crates/lobby/Cargo.toml crates/lobby/Cargo.toml
+COPY tools/atlas_gen/Cargo.toml tools/atlas_gen/Cargo.toml
+RUN mkdir -p crates/shared/src crates/server/src crates/client/src crates/lobby/src tools/atlas_gen/src && \
+    echo 'fn main(){}' > crates/server/src/main.rs && \
+    echo 'fn main(){}' > crates/client/src/main.rs && \
+    echo 'fn main(){}' > crates/lobby/src/main.rs && \
+    echo 'pub fn x(){}' > crates/shared/src/lib.rs && \
+    echo 'fn main(){}' > tools/atlas_gen/src/main.rs && \
+    cargo build --release -p deepcore-lobby --bin deepcore-lobby || true
+COPY . .
+RUN cargo build --release -p deepcore-lobby --bin deepcore-lobby
+
+FROM debian:bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && \
+    rm -rf /var/lib/apt/lists/* && \
+    useradd -m -u 10001 deepcore
+WORKDIR /deepcore
+COPY --from=builder /build/target/release/deepcore-lobby /usr/local/bin/deepcore-lobby
+RUN mkdir -p /data && chown -R deepcore /data
+USER deepcore
+VOLUME ["/data"]
+EXPOSE 24289
+ENTRYPOINT ["deepcore-lobby"]
+CMD ["--port", "24289", "--database", "sqlite:///data/lobby.sqlite?mode=rwc"]

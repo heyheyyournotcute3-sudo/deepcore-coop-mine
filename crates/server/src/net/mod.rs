@@ -4,6 +4,8 @@
 //! client. The client's first message must be a [`Handshake`] with a matching protocol version
 //! and content hash; only then does the server spawn the player and start streaming chunks.
 
+pub mod lobby;
+
 use std::collections::HashMap;
 use std::time::Duration;
 

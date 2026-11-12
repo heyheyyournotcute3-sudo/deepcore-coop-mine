@@ -4,6 +4,7 @@ members = [
     "crates/shared",
     "crates/server",
     "crates/client",
+    "crates/lobby",
     "tools/atlas_gen",
 ]
 
@@ -53,7 +54,8 @@ hashbrown = "0.16"
 # --- persistence / services (M9, M10) -----------------------------------
 rusqlite = { version = "0.37", features = ["bundled"] }
 axum = "0.8"
-sqlx = { version = "0.8", default-features = false, features = [
+# sqlx 0.9 links libsqlite3-sys 0.37, matching rusqlite 0.37, so both can coexist.
+sqlx = { version = "0.9", default-features = false, features = [
     "runtime-tokio",
     "sqlite",
     "macros",

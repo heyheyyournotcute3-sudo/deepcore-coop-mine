@@ -24,3 +24,5 @@ tracing-subscriber = { workspace = true }
 clap = { workspace = true }
 anyhow = { workspace = true }
 rand = { workspace = true }
+ureq = { version = "3.1", features = ["json"] }
+serde_json = "1.0"

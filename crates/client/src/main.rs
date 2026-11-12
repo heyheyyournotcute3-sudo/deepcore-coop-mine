@@ -99,6 +99,10 @@ fn main() -> anyhow::Result<()> {
     app.insert_resource(ConnectionSettings {
         connect_address: args.connect.clone(),
     });
+    app.insert_resource(ui::browser::ServerBrowser {
+        lobby_url: args.lobby.clone(),
+        ..Default::default()
+    });
     app.insert_resource(ContentDir(PathBuf::from(&args.content)));
     app.insert_resource(args.clone());
     app.add_plugins(ContentPlugin);

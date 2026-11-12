@@ -41,6 +41,9 @@ pub fn test_app(seed: u64) -> App {
         simulate_loss: 0,
         bots: 0,
         name: "test".to_owned(),
+        lobby: String::new(),
+        require_account: false,
+        public_host: None,
     }));
     app.init_resource::<WorldManager>();
     app.init_resource::<PendingBlockChanges>();
