@@ -34,8 +34,10 @@ pub mod chat;
 pub mod handshake;
 pub mod interaction;
 pub mod inventory;
+pub mod logistics;
 pub mod machine;
 pub mod mining;
+pub mod objectives;
 pub mod placement;
 pub mod player;
 pub mod power;
@@ -52,6 +54,7 @@ impl Plugin for SimPlugin {
             .init_resource::<PowerNetworks>()
             .init_resource::<TechStateResource>()
             .init_resource::<TechStateDirty>()
+            .init_resource::<objectives::ObjectiveState>()
             .add_systems(Startup, startup_resources);
 
         // Inputs and world changes run every tick.
@@ -65,6 +68,8 @@ impl Plugin for SimPlugin {
                 tick_machines,
                 compute_power_demand,
                 solve_power_networks,
+                logistics::scan_conveyors,
+                logistics::move_items_along_conveyors,
                 flush_block_changes,
             )
                 .chain()
@@ -96,6 +101,7 @@ impl Plugin for SimPlugin {
                 refresh_open_screens.run_if(in_state(ServerState::Running)),
                 send_welcome.run_if(in_state(ServerState::Running)),
                 broadcast_on_change.run_if(in_state(ServerState::Running)),
+                objectives::evaluate_objectives.run_if(in_state(ServerState::Running)),
             ),
         );
     }

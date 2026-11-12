@@ -212,6 +212,7 @@ pub fn break_block(
 /// Ticks running mining actions and finishes them.
 pub fn tick_mining(
     mut commands: Commands,
+    mut objectives: ResMut<crate::sim::objectives::ObjectiveState>,
     mut players: Query<(
         Entity,
         &mut PlayerState,
@@ -252,6 +253,7 @@ pub fn tick_mining(
                     &mut changes,
                 );
                 broken_any = true;
+                crate::sim::objectives::record_mined(&mut objectives, 1);
                 // Area drills wear their core cell per block.
                 if state.tool_charge > 0 {
                     state.tool_charge -= 1;
