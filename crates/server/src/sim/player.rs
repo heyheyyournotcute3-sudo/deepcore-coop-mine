@@ -20,6 +20,10 @@ use crate::ServerConfigResource;
 #[derive(Debug, Component)]
 pub struct Player;
 
+/// A saved player record that is not connected. Used to keep a name reserved until they rejoin.
+#[derive(Debug, Component)]
+pub struct Dormant;
+
 /// The client entity that owns this player.
 #[derive(Debug, Component)]
 pub struct OwnedBy(pub Entity);
@@ -72,16 +76,37 @@ pub fn spawn_player_for_client(
     commands: &mut Commands,
     content: &ContentRegistry,
     _config: &ServerConfigResource,
+    saved: Option<&crate::persistence::load::SavedPlayers>,
     client: Entity,
     name: String,
 ) {
-    let spawn = deepcore_shared::worldgen::spawn_position_for_seed(_config.0.seed, content);
     let mut inventory = Inventory::default();
     let pickaxe = content
         .item_by_key("steel_pickaxe")
         .map(|item| item.id)
         .unwrap_or_default();
     inventory.hotbar[0] = ItemStack::new(pickaxe, 1);
+
+    // A returning player keeps their position and inventory; a new player starts at the camp
+    // with a steel pickaxe.
+    let (spawn, restored) = match saved.and_then(|saved| saved.by_name.get(&name).cloned()) {
+        Some((position, saved_inventory)) => {
+            info!("restoring saved state for {name} at {position:?}");
+            (position, Some(saved_inventory))
+        }
+        None => (
+            deepcore_shared::worldgen::spawn_position_for_seed(_config.0.seed, content),
+            None,
+        ),
+    };
+    if let Some(saved_inventory) = restored {
+        // Keep the saved hotbar/backpack, but make sure a player can never be left without a
+        // tool if their save predates the starting pickaxe.
+        inventory = saved_inventory;
+        if inventory.hotbar.iter().all(|stack| stack.is_empty()) {
+            inventory.hotbar[0] = ItemStack::new(pickaxe, 1);
+        }
+    }
 
     let body = BodyState {
         position: Vec3::new(

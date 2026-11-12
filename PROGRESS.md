@@ -75,13 +75,15 @@ Bevy 0.20 API notes that cost time and are worth remembering:
 | M6 | Era 3 electricity | shared rules + recipes + data **done**; network overlay reads real stats |
 | M7 | Era 4 chemistry | shared rules + recipes + data **done** |
 | M8 | Era 5 nuclear | **done** — full chain tested end to end, reactor physics, waste, Nuclear Drill |
-| M9 | Persistence | save side **done** (region files + SQLite, atomic writes, autosave); load-on-start missing |
+| M9 | Persistence | **done** — region files + SQLite, atomic writes, autosave, load on startup, returning players restored |
 | M10 | Lobby | **done** — accounts (argon2), tokens, server browser, heartbeat, Dockerfiles |
 
 ### What works right now (verified by running)
 
-* `cargo test --workspace`: **89 tests, all green** (shared 58, client 12, server 2 unit +
-  9 integration + 4 nuclear, lobby 4).
+* `cargo test --workspace`: **91 tests, all green** (shared 58, client 12, server 2 unit +
+  9 integration + 4 nuclear + 2 persistence-load, lobby 4).
+* Restart verified with the real binaries: a clean shutdown writes the player record and a
+  restart restores it; a returning player gets their saved position and inventory back.
 * `cargo clippy --workspace --all-targets -- -D warnings`: clean.
 * The lobby serves live HTTP: `/health`, `/api/register`, `/api/login`, `/api/verify`,
   `/api/servers`, `/api/servers/register`, `/api/servers/heartbeat`.
@@ -104,7 +106,9 @@ Bevy 0.20 API notes that cost time and are worth remembering:
    chat buffer for the password field. A proper two-field login form is needed.
 3. **Chunk unload** is implemented server-side (`unload_queue`) but never populated; clients
    keep every chunk they have received.
-4. **Persistence loads nothing on startup** — chunks/players/tech are saved but not restored.
+4. **Saved chunks are replayed as edits**, so a restored world is correct but the first visit to
+   a previously-visited chunk costs a generation pass. Fine for now; a region cache would make
+   it instant.
 5. **Reactor console, scram panel, multi-block assembly** are data + tick only; no build flow.
 6. **Bots** (`--bots N`) flag is parsed but not implemented.
 7. **Latency/loss simulation flags** are parsed; renet 2.0 has no built-in simulation hook, so
@@ -186,9 +190,7 @@ nuclear integration test, network convergence tests with simulated latency.
 
 ## Next session: start here
 
-1. Implement save **loading** on startup (the save format and writers exist; the reader for
-   region files is `read_region`, players/tech are in SQLite).
-2. Item logistics: conveyors, item pipes and minecarts moving stacks between machine outputs and
+1. Item logistics: conveyors, item pipes and minecarts moving stacks between machine outputs and
    inputs. The blocks, recipes and machine inventories are all in place.
 3. Inventory drag-and-drop and a real two-field lobby login form in the egui menu.
 4. Chunk unload messages and a loading-screen gate on the first 64 chunks.

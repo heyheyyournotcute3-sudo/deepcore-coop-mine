@@ -114,6 +114,7 @@ fn handle_connected_clients(
 pub struct PendingHandshake;
 
 /// Reads the handshake message and spawns the player when it is valid.
+#[allow(clippy::too_many_arguments)]
 fn receive_handshakes(
     mut commands: Commands,
     mut messages: MessageReader<FromClient<Handshake>>,
@@ -121,6 +122,7 @@ fn receive_handshakes(
     mut joins: ResMut<PendingJoins>,
     content: Res<ContentRegistry>,
     config: Res<ServerConfigResource>,
+    saved: Res<crate::persistence::load::SavedPlayers>,
     clients: Query<&ConnectedClient>,
 ) {
     for FromClient { client_id, message } in messages.read() {
@@ -154,7 +156,14 @@ fn receive_handshakes(
         }
         let name = sanitise_name(&message.name);
         info!("handshake from {name} accepted");
-        spawn_player_for_client(&mut commands, &content, &config, client_entity, name);
+        spawn_player_for_client(
+            &mut commands,
+            &content,
+            &config,
+            Some(&saved),
+            client_entity,
+            name,
+        );
         joins.waiting.remove(&client_entity);
     }
 }

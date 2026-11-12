@@ -1,5 +1,7 @@
 //! Persistence: modified chunks to region files, players and the tech tree to SQLite.
 //!
+//! The read side lives in [`load`].
+//!
 //! The rule is that unmodified chunks are never written: they regenerate from the seed. A chunk
 //! is written when it is evicted after an edit or on autosave, and every write goes to a temp
 //! file that is then renamed, so a crash cannot leave a half-written region behind.
@@ -16,6 +18,8 @@ use deepcore_shared::voxel::{ChunkPos, LoadedChunks};
 use rusqlite::Connection;
 use tracing::{error, info, warn};
 
+pub mod load;
+
 use crate::ServerConfigResource;
 use crate::crafting_state::TechStateResource;
 use crate::world::WorldManager;
@@ -26,6 +30,15 @@ pub struct PersistencePlugin;
 impl Plugin for PersistencePlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, open_save);
+        // The loader runs after `open_save` so the connection exists.
+        app.init_resource::<load::SavedPlayers>();
+        app.add_systems(
+            Startup,
+            (
+                load::load_on_startup.after(open_save),
+                load::index_saved_players.after(open_save),
+            ),
+        );
         app.add_systems(
             Update,
             (autosave, save_on_exit)

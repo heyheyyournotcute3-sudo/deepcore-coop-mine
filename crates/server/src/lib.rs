@@ -66,6 +66,9 @@ pub struct ServerArgs {
     /// Public host name advertised to the lobby.
     #[arg(long)]
     pub public_host: Option<String>,
+    /// Exit after this many seconds (used by the restart test and by smoke checks).
+    #[arg(long, default_value_t = 0)]
+    pub run_seconds: u64,
 }
 
 /// The protocol id used by renet's netcode: changing the protocol version changes the id, so
@@ -117,6 +120,9 @@ pub fn run() -> anyhow::Result<()> {
         persistence::PersistencePlugin,
     ));
     app.add_message::<AppExit>();
+    if args.run_seconds > 0 {
+        app.add_systems(Update, exit_after_delay);
+    }
 
     app.run();
     Ok(())
@@ -170,6 +176,7 @@ pub fn build_headless_app(seed: u64, content_dir: &str) -> App {
         lobby: String::new(),
         require_account: false,
         public_host: None,
+        run_seconds: 0,
     }));
     app.init_resource::<world::WorldManager>();
     app.add_plugins((world::ServerWorldPlugin, sim::SimPlugin));
@@ -180,6 +187,23 @@ pub fn build_headless_app(seed: u64, content_dir: &str) -> App {
 pub fn fatal(message: &str) -> ! {
     error!("{message}");
     std::process::exit(1)
+}
+
+/// Exits the process after `--run-seconds`, sending `AppExit` so the save-on-exit path runs.
+fn exit_after_delay(
+    time: Res<Time<Real>>,
+    config: Res<ServerConfigResource>,
+    mut exits: MessageWriter<AppExit>,
+    mut sent: Local<bool>,
+) {
+    if *sent {
+        return;
+    }
+    if time.elapsed_secs() >= config.0.run_seconds as f32 {
+        *sent = true;
+        info!("run time reached, shutting down cleanly");
+        exits.write(AppExit::Success);
+    }
 }
 
 /// A small helper so tests and the binary agree on the simulation timestep.

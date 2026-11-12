@@ -44,6 +44,7 @@ pub fn test_app(seed: u64) -> App {
         lobby: String::new(),
         require_account: false,
         public_host: None,
+        run_seconds: 0,
     }));
     app.init_resource::<WorldManager>();
     app.init_resource::<PendingBlockChanges>();
@@ -82,7 +83,14 @@ pub fn spawn_test_player(app: &mut App, position: BlockPos) -> Entity {
     let client = app.world_mut().spawn_empty().id();
     {
         let mut commands = app.world_mut().commands();
-        spawn_player_for_client(&mut commands, &content, &config, client, "Test".into());
+        spawn_player_for_client(
+            &mut commands,
+            &content,
+            &config,
+            None,
+            client,
+            "Test".into(),
+        );
     }
     app.update();
     // Find the player that was spawned and move it to the requested position.
