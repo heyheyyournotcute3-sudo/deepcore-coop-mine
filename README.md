@@ -67,13 +67,32 @@ inventories, machines, power networks and hazards, and validates every client in
 shows: it predicts its own movement with the same shared code and sends intents for everything
 else. See `docs/PLAN.md` for the full design and `PROGRESS.md` for the current state.
 
+## What is in the box
+
+| Area | State |
+|---|---|
+| Voxel world | 1024 × 1024 × 512 blocks, palette-compressed 32³ chunks, deterministic worldgen with six layers, caves and ore veins, greedy meshing on the async pool |
+| Mining | hardness/tier rules, area drills, server-validated intents, predicted crack animation |
+| Multiplayer | authoritative 30 Hz server, handshake with content hash, chunk streaming, movement prediction and reconciliation |
+| Content | 83 blocks, 148 items, 134 recipes, 36 machines, 30 tech nodes — all RON, validated at load |
+| Progression | all six Eras, the full nuclear chain (crush → leach → precipitate → convert → enrich → fabricate), reactor physics with scram, waste handling, the Nuclear Drill |
+| Base building | machine kit placement with ghost preview, machine screens, conveyors, power (steam and electric with brownouts), research desk and tech tree |
+| Hazards | darkness, flooding, gas, heat, cave-ins, radiation with a Geiger counter and gear |
+| Persistence | region files + SQLite, autosave, atomic writes, load on startup, returning players restored |
+| Lobby | axum + sqlx accounts (argon2), hashed tokens, server browser, heartbeats, Dockerfiles |
+| Polish | procedural atlas and audio (zero downloaded assets), HUD, egui screens, guided objectives |
+
 ## Tests
 
 ```bash
-cargo test --workspace
+cargo test --workspace   # 96 tests
 ```
 
-69 tests cover chunk palette round-trips, worldgen determinism and ore placement, the break-time
-formula and tier gate, inventory stacking (with property tests), machine ticks, tech tree
-deposits, power solving and brownouts, radiation maths, the wire protocol, procedural atlas
-generation, greedy meshing, procedural audio, and region-file persistence.
+Coverage: chunk palette round-trips, worldgen determinism/ore placement/generation speed, the
+break-time formula and tier gate, inventory stacking (property tests), machine ticks, tech tree
+deposits, power solving and brownouts, radiation maths, the wire protocol, procedural atlas and
+audio, greedy meshing, region-file round-trips — plus **end-to-end intent tests** (mine, refuse
+too-hard, refuse out-of-reach, place, broadcast), nine server integration tests, four nuclear
+chain tests including the whole enrichment chain, and four lobby HTTP tests.
+
+`PROGRESS.md` lists every known gap, and the bugs the end-to-end tests caught.

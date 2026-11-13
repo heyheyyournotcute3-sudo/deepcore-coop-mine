@@ -200,6 +200,10 @@ fn setup_scene(mut commands: Commands, content: Res<ContentRegistry>, config: Re
             ..default()
         }),
         Msaa::Sample4,
+        Camera {
+            clear_color: ClearColorConfig::Custom(Color::srgb(0.42, 0.55, 0.72)),
+            ..default()
+        },
         DistanceFog {
             color: Color::srgba(0.35, 0.40, 0.48, 1.0),
             falloff: FogFalloff::Linear {
@@ -215,8 +219,8 @@ fn setup_scene(mut commands: Commands, content: Res<ContentRegistry>, config: Re
         SpotLight {
             // A headlamp, not a floodlight: bright enough to read a tunnel, not to blow out
             // the wall half a metre away.
-            intensity: 320_000.0,
-            range: 48.0,
+            intensity: 260_000.0,
+            range: 46.0,
             outer_angle: 0.70,
             inner_angle: 0.30,
             color: Color::srgb(1.0, 0.96, 0.86),
@@ -229,16 +233,18 @@ fn setup_scene(mut commands: Commands, content: Res<ContentRegistry>, config: Re
     commands.spawn((
         DirectionalLight {
             // Daylight on the surface; the mine below is lit by the headlamp and placed lamps.
-            illuminance: 22_000.0,
-            shadow_maps_enabled: true,
+            illuminance: 11_000.0,
+            shadow_maps_enabled: false,
+            color: Color::srgb(1.0, 0.97, 0.90),
             ..default()
         },
-        Transform::from_xyz(0.0, 200.0, 0.0).looking_at(Vec3::new(-60.0, 0.0, -40.0), Vec3::Y),
+        // Straight down and slightly to the side: a high sun, so the flat camp is evenly lit.
+        Transform::from_rotation(Quat::from_euler(EulerRot::XYZ, -1.15, 0.5, 0.0)),
     ));
     // Ambient light is a component in Bevy 0.20; one entity drives the whole scene.
     commands.spawn(AmbientLight {
-        color: Color::srgb(0.55, 0.60, 0.72),
-        brightness: 1_600.0,
+        color: Color::srgb(0.55, 0.62, 0.78),
+        brightness: 1_200.0,
         ..default()
     });
     info!("scene ready: {} blocks of content", content.blocks.len());

@@ -178,8 +178,7 @@ fn set_block(app: &mut App, pos: BlockPos, block: u16) {
 /// the accumulator crosses the timestep.
 fn step(app: &mut App) {
     app.update();
-    app.world_mut()
-        .run_schedule(bevy::app::FixedMain);
+    app.world_mut().run_schedule(bevy::app::FixedMain);
 }
 
 /// The block at a position.
