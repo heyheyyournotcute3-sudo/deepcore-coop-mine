@@ -55,6 +55,7 @@ impl Plugin for SimPlugin {
             .init_resource::<TechStateResource>()
             .init_resource::<TechStateDirty>()
             .init_resource::<objectives::ObjectiveState>()
+            .init_resource::<logistics::Conveyors>()
             .add_systems(Startup, startup_resources);
 
         // Inputs and world changes run every tick.
@@ -62,7 +63,6 @@ impl Plugin for SimPlugin {
             FixedUpdate,
             (
                 apply_player_inputs,
-                handle_start_mining,
                 tick_mining,
                 tick_player_vitals,
                 tick_machines,
@@ -80,6 +80,7 @@ impl Plugin for SimPlugin {
         app.add_systems(
             PreUpdate,
             (
+                handle_start_mining,
                 placement::handle_machine_placement,
                 handle_place_block,
                 handle_interaction,

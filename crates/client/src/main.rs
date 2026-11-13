@@ -262,7 +262,9 @@ fn follow_local_player(
     transform.translation = player.translation + Vec3::Y * deepcore_shared::movement::EYE_HEIGHT;
     // The camera looks where the mouse points, using the predicted input rather than the
     // replicated rotation, so looking around is never delayed by the network.
-    transform.rotation = Quat::from_euler(EulerRot::YXZ, input.yaw, -input.pitch, 0.0);
+    // Positive pitch means "look up"; in Bevy a positive X rotation pitches the camera down,
+    // so the sign is negated here to match `input::forward_vector`.
+    transform.rotation = Quat::from_euler(EulerRot::YXZ, input.yaw, input.pitch, 0.0);
     if let Ok(mut lamp_transform) = lamp.single_mut() {
         lamp_transform.translation = transform.translation;
         lamp_transform.rotation = transform.rotation;

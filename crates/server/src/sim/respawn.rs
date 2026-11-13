@@ -11,7 +11,7 @@ use deepcore_shared::voxel::{BlockPos, LoadedChunks};
 
 use crate::sim::inventory::inventory_update;
 use crate::sim::machine::{BlockEntityIndex, CrateEntity, place_crate};
-use crate::sim::player::{OwnedBy, Player, PlayerState};
+use crate::sim::player::{OwnsPlayer, Player, PlayerState};
 use crate::world::WorldManager;
 
 /// Handles the `Respawn` intent.
@@ -28,7 +28,7 @@ pub fn handle_respawn(
         ),
         With<Player>,
     >,
-    clients: Query<&OwnedBy>,
+    clients: Query<&OwnsPlayer>,
     content: Res<ContentRegistry>,
     mut chunks: ResMut<LoadedChunks>,
     mut manager: ResMut<WorldManager>,

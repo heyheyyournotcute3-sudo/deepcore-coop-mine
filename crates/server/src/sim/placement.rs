@@ -15,7 +15,7 @@ use crate::crafting_state::TechStateResource;
 use crate::sim::inventory::inventory_update;
 use crate::sim::machine::{BlockEntityIndex, place_crate, place_machine};
 use crate::sim::mining::PendingBlockChanges;
-use crate::sim::player::{OwnedBy, Player, PlayerState};
+use crate::sim::player::{OwnsPlayer, Player, PlayerState};
 use crate::world::WorldManager;
 
 /// Handles placing machine kits and storage crates.
@@ -30,7 +30,7 @@ pub fn handle_machine_placement(
         ),
         With<Player>,
     >,
-    clients: Query<&OwnedBy>,
+    clients: Query<&OwnsPlayer>,
     mut chunks: ResMut<LoadedChunks>,
     mut manager: ResMut<WorldManager>,
     mut index: ResMut<BlockEntityIndex>,
@@ -181,7 +181,7 @@ pub fn handle_crate_placement(
         ),
         With<Player>,
     >,
-    clients: Query<&OwnedBy>,
+    clients: Query<&OwnsPlayer>,
     mut chunks: ResMut<LoadedChunks>,
     mut manager: ResMut<WorldManager>,
     mut index: ResMut<BlockEntityIndex>,

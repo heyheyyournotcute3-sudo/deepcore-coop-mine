@@ -17,7 +17,7 @@ use deepcore_shared::protocol::{
 use deepcore_shared::voxel::{BlockFace, BlockPos, LoadedChunks};
 use tracing::debug;
 
-use crate::sim::player::{OwnedBy, Player, PlayerState};
+use crate::sim::player::{OwnsPlayer, Player, PlayerState};
 use crate::world::WorldManager;
 
 /// An in-progress mining action.
@@ -65,7 +65,7 @@ pub fn handle_start_mining(
         ),
         With<Player>,
     >,
-    clients: Query<&OwnedBy>,
+    clients: Query<&OwnsPlayer>,
     mut feedback: MessageWriter<ToClients<MiningFeedback>>,
     chunks: Res<LoadedChunks>,
     content: Res<ContentRegistry>,
@@ -301,7 +301,7 @@ pub fn handle_place_block(
     mut manager: ResMut<WorldManager>,
     mut changes: ResMut<PendingBlockChanges>,
     content: Res<ContentRegistry>,
-    clients: Query<&OwnedBy>,
+    clients: Query<&OwnsPlayer>,
     mut inventories: MessageWriter<ToClients<InventoryUpdate>>,
 ) {
     for FromClient { client_id, message } in intents.read() {

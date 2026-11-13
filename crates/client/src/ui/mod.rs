@@ -131,6 +131,12 @@ fn capture_pointer(
             Screen::TechTree
         };
     }
+    if keys.just_pressed(KeyCode::Enter) {
+        ui.chat_open = true;
+    }
+    if keys.just_pressed(KeyCode::Escape) && ui.chat_open {
+        ui.chat_open = false;
+    }
     let wants_pointer = context.is_pointer_over_egui() || ui.screen != Screen::Playing;
     input.ui_open = wants_pointer;
 }
@@ -179,12 +185,15 @@ fn draw_ui(
     if ui.screen == Screen::Machine {
         draw_machine(ctx, &mut ui, &session, &content, &mut intents);
     }
-    draw_chat(ctx, &mut ui, &session, &mut intents);
+    if ui.chat_open {
+        draw_chat(ctx, &mut ui, &session, &mut intents);
+    }
     draw_objectives(ctx, &session);
 
-    if ctx.is_pointer_over_egui() {
-        input.captured = false;
-    }
+    // Only a real screen (inventory, machine, tech tree, chat) takes the pointer away from the
+    // crosshair. The objectives panel is display-only and never grabs input.
+    let screen_open = ui.screen != Screen::Playing || ui.chat_open;
+    input.captured = !screen_open && !ctx.is_pointer_over_egui();
 }
 
 fn draw_main_menu(
@@ -599,6 +608,8 @@ fn draw_objectives(ctx: &mut egui::Context, session: &SessionState) {
     egui::Window::new("Objectives")
         .anchor(egui::Align2::RIGHT_TOP, [-12.0, 90.0])
         .resizable(false)
+        .title_bar(false)
+        .interactable(false)
         .show(ctx, |panel| {
             for (index, (title, hint)) in OBJECTIVES.iter().enumerate() {
                 let done = index < session_objective_progress(session);

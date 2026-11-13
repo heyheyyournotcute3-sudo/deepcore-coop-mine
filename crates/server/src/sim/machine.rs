@@ -20,7 +20,7 @@ use deepcore_shared::voxel::{BlockFace, BlockPos, LoadedChunks};
 use tracing::{debug, warn};
 
 use crate::crafting_state::TechStateResource;
-use crate::sim::player::{OwnedBy, Player, PlayerState};
+use crate::sim::player::{OwnedBy, OwnsPlayer, Player, PlayerState};
 use crate::world::WorldManager;
 
 /// A machine placed in the world.
@@ -248,7 +248,7 @@ pub fn handle_machine_intents(
     mut intents: MessageReader<FromClient<ClientIntent>>,
     mut machines: Query<&mut MachineEntity>,
     mut players: Query<(&PlayerState, &deepcore_shared::protocol::NetworkPosition), With<Player>>,
-    clients: Query<&OwnedBy>,
+    clients: Query<&OwnsPlayer>,
     index: Res<BlockEntityIndex>,
     content: Res<ContentRegistry>,
     mut screens: MessageWriter<ToClients<MachineScreen>>,

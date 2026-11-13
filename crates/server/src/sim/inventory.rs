@@ -9,7 +9,7 @@ use deepcore_shared::protocol::{
 };
 use tracing::debug;
 
-use crate::sim::player::{OwnedBy, Player, PlayerState};
+use crate::sim::player::{OwnedBy, OwnsPlayer, Player, PlayerState};
 
 /// Builds the message describing a player's inventory.
 pub fn inventory_update(state: &PlayerState) -> InventoryUpdate {
@@ -38,7 +38,7 @@ pub fn sync_inventories(
 pub fn handle_inventory_intents(
     mut intents: MessageReader<FromClient<ClientIntent>>,
     mut players: Query<&mut PlayerState, With<Player>>,
-    clients: Query<&OwnedBy>,
+    clients: Query<&OwnsPlayer>,
     content: Res<ContentRegistry>,
     mut notices: MessageWriter<ToClients<ServerNotice>>,
 ) {

@@ -2,14 +2,15 @@
 
 use bevy::prelude::*;
 use bevy_replicon::prelude::*;
-use deepcore_shared::protocol::{ChatLine, ClientIntent, FromClient, PlayerName};
+use deepcore_shared::protocol::{ChatLine, ClientIntent, FromClient};
 
-use crate::sim::player::{OwnedBy, Player};
+use crate::sim::player::{OwnsPlayer, Player};
+use deepcore_shared::protocol::PlayerName;
 
 /// Handles the `Chat` intent: validates the text and broadcasts it.
 pub fn handle_chat(
     mut intents: MessageReader<FromClient<ClientIntent>>,
-    players: Query<(&PlayerName, &OwnedBy), With<Player>>,
+    players: Query<(&PlayerName, &OwnsPlayer), With<Player>>,
     mut lines: MessageWriter<ToClients<ChatLine>>,
 ) {
     for FromClient { client_id, message } in intents.read() {

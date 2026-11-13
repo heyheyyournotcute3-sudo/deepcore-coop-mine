@@ -11,7 +11,7 @@ use deepcore_shared::protocol::{
 use crate::crafting_state::{TechStateResource, tech_state_message};
 use crate::sim::inventory::inventory_update;
 use crate::sim::machine::{BlockEntityIndex, CrateEntity, MachineEntity, screen_message};
-use crate::sim::player::{OwnedBy, Player, PlayerState};
+use crate::sim::player::{OwnsPlayer, Player, PlayerState};
 
 /// Handles `Interact` and `TakeAll`.
 #[allow(clippy::too_many_arguments)]
@@ -24,7 +24,7 @@ pub fn handle_interaction(
         ),
         With<Player>,
     >,
-    clients: Query<&OwnedBy>,
+    clients: Query<&OwnsPlayer>,
     index: Res<BlockEntityIndex>,
     mut crates: Query<&mut CrateEntity>,
     mut machines: Query<&mut MachineEntity>,

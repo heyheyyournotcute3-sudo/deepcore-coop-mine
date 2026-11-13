@@ -3,7 +3,8 @@
 Deepcore — co-op 3D voxel mining game in Rust (Bevy). This file is the hand-off note: a future
 session (possibly a different model) must be able to continue from this file alone.
 
-**Last updated:** M0–M4 + M8 nuclear chain + M10 lobby working end to end; 89 tests green.
+**Last updated:** M0–M5, M8 nuclear chain, M9 persistence + load, M10 lobby. 96 tests green.
+Mining verified end to end in the real game (client intent → server authority → block gone).
 
 ---
 
@@ -80,7 +81,7 @@ Bevy 0.20 API notes that cost time and are worth remembering:
 
 ### What works right now (verified by running)
 
-* `cargo test --workspace`: **91 tests, all green** (shared 58, client 12, server 2 unit +
+* `cargo test --workspace`: **96 tests, all green** (shared 58, client 12, server 2 unit +
   9 integration + 4 nuclear + 2 persistence-load, lobby 4).
 * Restart verified with the real binaries: a clean shutdown writes the player record and a
   restart restores it; a returning player gets their saved position and inventory back.
@@ -187,6 +188,23 @@ assets/data/       blocks, items, recipes, machines, tech_tree, layers, hazards 
 
 Missing (planned): headless Bevy app tests driving intents, per-Era progression tests, the M8
 nuclear integration test, network convergence tests with simulated latency.
+
+## Bugs found and fixed by the end-to-end tests (worth knowing)
+
+These were all silently broken and are now covered by tests:
+
+1. **`StartMining` was handled in `FixedUpdate`**, but message queues are cleared at the end of
+   every frame, so mining intents were dropped before the timer ever saw them. The handler now
+   runs in `PreUpdate` with the other intents; only the timer is in `FixedUpdate`.
+2. **`OwnedBy` was only on the player**, while every intent handler looked it up on the *client*
+   entity, so all intents silently failed. Clients now carry `OwnsPlayer(player)` as the reverse
+   link, and the handlers query that.
+3. **The egui chat window was always drawn**, so `is_pointer_over_egui` was always true and the
+   cursor was permanently released: the mouse could never mine. Chat now only exists while open.
+4. **The camera pitch sign was inverted** relative to the crosshair raycast, so looking down
+   looked up. A test now asserts the camera quaternion and `forward_vector` agree.
+5. **The camp fill extended above the surface**, burying the spawn point in dirt, and a
+   headless resource was missing (`Conveyors`) which panicked the server on startup.
 
 ## Next session: start here
 

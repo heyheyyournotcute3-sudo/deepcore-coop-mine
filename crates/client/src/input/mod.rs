@@ -208,7 +208,10 @@ fn raycast_target(
     }
 }
 
-/// A unit vector from yaw and pitch.
+/// A unit vector from yaw and pitch, matching the camera quaternion
+/// `Quat::from_euler(EulerRot::YXZ, yaw, pitch, 0)` used by `follow_local_player`.
+///
+/// Looking up is positive pitch, so the Y component is `sin(pitch)`.
 pub fn forward_vector(yaw: f32, pitch: f32) -> Vec3 {
     let (sin_yaw, cos_yaw) = yaw.sin_cos();
     let (sin_pitch, cos_pitch) = pitch.sin_cos();
@@ -441,4 +444,61 @@ fn draw_target_outline(mut gizmos: Gizmos, targeting: Res<Targeting>) {
     let size = Vec3::splat(1.002);
     gizmos.cube(Transform::from_translation(centre).with_scale(size), colour);
     let _ = PLAYER_HEIGHT;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use deepcore_shared::voxel::{Chunk, ChunkPos};
+
+    fn floor_world() -> LoadedChunks {
+        let mut chunks = LoadedChunks::default();
+        // A floor at y = 0 across the chunks around the origin, plus air above.
+        let mut chunk = Chunk::default();
+        for y in 0..1 {
+            for z in 0..32 {
+                for x in 0..32 {
+                    chunk.set(bevy::math::UVec3::new(x, y, z), 3);
+                }
+            }
+        }
+        chunks.insert(ChunkPos::new(0, 0, 0), chunk);
+        chunks
+    }
+
+    #[test]
+    fn looking_straight_down_hits_the_floor() {
+        let chunks = floor_world();
+        let origin = Vec3::new(16.5, 8.0, 16.5);
+        // Pitch = -90° is straight down.
+        let direction = forward_vector(0.0, -std::f32::consts::FRAC_PI_2);
+        assert!(direction.y < -0.9, "direction was {direction:?}");
+        let hit = raycast(&chunks, origin, direction, 10.0);
+        assert!(hit.is_some(), "no hit looking straight down");
+        let (block, _, _) = hit.expect("hit");
+        assert_eq!(block, BlockPos::new(16, 0, 16));
+    }
+
+    #[test]
+    fn looking_forward_hits_nothing_on_a_flat_floor() {
+        let chunks = floor_world();
+        let origin = Vec3::new(16.5, 8.0, 16.5);
+        let direction = forward_vector(0.0, 0.0);
+        assert!(raycast(&chunks, origin, direction, 10.0).is_none());
+    }
+
+    #[test]
+    fn forward_vector_matches_the_camera_quaternion() {
+        // The camera uses `Quat::from_euler(EulerRot::YXZ, yaw, -pitch, 0)`, whose -Z axis must
+        // be the same vector the crosshair ray uses.
+        for (yaw, pitch) in [(0.0f32, 0.0f32), (0.7, 0.3), (-1.2, -0.5), (2.5, 0.9)] {
+            let quat = Quat::from_euler(EulerRot::YXZ, yaw, pitch, 0.0);
+            let camera_forward = quat * Vec3::NEG_Z;
+            let ray = forward_vector(yaw, pitch);
+            assert!(
+                (camera_forward - ray).length() < 1e-4,
+                "yaw {yaw} pitch {pitch}: camera {camera_forward:?} vs ray {ray:?}"
+            );
+        }
+    }
 }

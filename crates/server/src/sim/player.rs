@@ -24,9 +24,13 @@ pub struct Player;
 #[derive(Debug, Component)]
 pub struct Dormant;
 
-/// The client entity that owns this player.
+/// On a player: the client entity that owns it.
 #[derive(Debug, Component)]
 pub struct OwnedBy(pub Entity);
+
+/// On a client entity: the player it owns. This is the lookup intent handlers use.
+#[derive(Debug, Component)]
+pub struct OwnsPlayer(pub Entity);
 
 /// Per-player server state that never leaves the server.
 #[derive(Debug, Clone, Component)]
